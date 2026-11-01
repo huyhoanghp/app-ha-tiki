@@ -1,12 +1,12 @@
-// ND dán firebaseConfig từ Firebase Console (Project settings > Your apps) vào đây
+// Firebase config — project: apptietkiem (do CoDev setup ngày 01/11/2026)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAyph5bOYZspPWGcSGX1t8Zznd-1EDhuhk",
+  authDomain: "apptietkiem.firebaseapp.com",
+  databaseURL: "https://apptietkiem-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "apptietkiem",
+  storageBucket: "apptietkiem.firebasestorage.app",
+  messagingSenderId: "628593407655",
+  appId: "1:628593407655:web:4819cfabc7b7b937a60d82"
 };
 
 const ALLOWED_EMAIL = "huyhoanghp@gmail.com";
