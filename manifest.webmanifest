@@ -1,0 +1,26 @@
+{
+  "name": "App Tiết Kiệm — HA TIKI",
+  "short_name": "Tiết Kiệm",
+  "description": "Quản lý heo đất tiền tiết kiệm: nạp/rút theo mệnh giá, thống kê, biểu đồ và báo cáo.",
+  "lang": "vi",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0fdf4",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

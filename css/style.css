@@ -80,7 +80,7 @@ html[data-theme="dark"] {
   color-scheme: dark;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 body {
   font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
@@ -89,6 +89,8 @@ body {
   min-height: 100vh;
   transition: background 0.25s, color 0.25s;
 }
+
+button, .tab, .btn, .btn-action, .btn-icon, .btn-sm { touch-action: manipulation; }
 
 .hidden { display: none !important; }
 
@@ -358,16 +360,53 @@ tfoot th { background: var(--thead-bg); color: var(--green-dark); }
 
 /* ============ FOOTER ============ */
 .footer { text-align: center; color: var(--muted); font-size: 13px; padding: 22px 0 28px; }
+.footer-link { color: var(--green-dark); font-weight: 600; text-decoration: none; }
+.footer-link:hover { text-decoration: underline; }
 
 /* ============ RESPONSIVE ============ */
 @media (max-width: 640px) {
   .hero { flex-direction: column; align-items: stretch; text-align: center; }
-  .hero-amount { font-size: 36px; }
+  .hero-amount { font-size: 34px; }
   .hero-actions { justify-content: center; }
-  .btn-action, .btn-action.big { width: 100%; font-size: 19px; padding: 20px 0; }
-  .tab { padding: 10px 14px; font-size: 13.5px; }
+  .btn-action, .btn-action.big { width: 100%; font-size: 19px; padding: 18px 0; }
+  .tab { padding: 11px 16px; font-size: 14px; min-height: 40px; }
   .chart-box { height: 240px; }
   .st-row { grid-template-columns: 1fr; }
+
+  .header-inner { padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px; }
+  .brand-icon { font-size: 28px; }
+  .brand-title { font-size: 16px; }
+  .brand-owner { font-size: 11.5px; }
+  .btn-icon { width: 38px; height: 38px; font-size: 16px; }
+  .main { padding: 14px; }
+  .hero { padding: 20px 16px; }
+  .cards { gap: 10px; }
+  .stat-card { padding: 14px; }
+  .stat-value { font-size: 18px; }
+
+  input, select, textarea { font-size: 16px !important; }
+  .login-card { padding: 30px 22px; }
+  .login-card input { font-size: 16px; }
+
+  .filters select, .filters input { min-height: 44px; padding: 8px 10px; }
+  .btn { min-height: 44px; }
+
+  .table-card { padding: 6px 6px 10px; }
+  #detail-table th, #detail-table td { padding: 8px 6px; font-size: 12.5px; }
+  #detail-table th:nth-child(3), #detail-table td:nth-child(3),
+  #detail-table th:nth-child(4), #detail-table td:nth-child(4),
+  #detail-table th:nth-child(6), #detail-table td:nth-child(6),
+  #detail-table th:nth-child(7), #detail-table td:nth-child(7) { display: none; }
+  .btn-sm { padding: 5px 7px; font-size: 11.5px; }
+  .report-table th, .report-table td { padding: 7px 8px; font-size: 12px; }
+  .table-summary { font-size: 12.5px; gap: 12px; padding: 10px 12px; }
+
+  .modal { border-radius: 18px; }
+  .modal-body { padding: 16px 18px; }
+  .modal-header { padding: 14px 18px; font-size: 16px; }
+  .panel-card { padding: 16px; }
+  .chart-section { padding: 16px; }
+  .footer { padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ============ PRINT ============ */
