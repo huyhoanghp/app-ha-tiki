@@ -135,4 +135,47 @@ Biểu đồ tuần/tháng/năm ✅ · Bảng báo cáo có dòng Tổng ✅ · 
 6. Nhắn CoDev để commit + push, hoặc tự chạy: `git add . && git commit -m "config firebase" && git push`
 7. Mở lại webapp → đăng nhập → bấm **"Khởi tạo dữ liệu kiểm kê"** → dùng thật! 💰
 
+---
+
+## PHIÊN 2 — 01/11/2026: Bước B6 do CoDev tự thực hiện (ND ủy quyền đăng nhập)
+
+### 1. Yêu cầu
+
+ND yêu cầu CoDev **tự làm bước B6** (không tự thao tác console), cung cấp tài khoản Google
+`huyhoanghp` để đăng nhập Firebase Console.
+
+### 2. Quá trình thực hiện tự động (Playwright + Chrome thật)
+
+| Giai đoạn | Công việc | Kết quả |
+|---|---|---|
+| A | Đăng nhập Google `huyhoanghp@gmail.com` (ND bấm **Yes** trên điện thoại Redmi Note 12 khi Google gửi thông báo xác minh 2 bước) | ✅ |
+| C | Tạo project **`apptietkiem`** (tắt Google Analytics) | ✅ |
+| D | Tạo **Realtime Database** tại **Singapore (asia-southeast1)** | ✅ |
+| E | Bật **Authentication → Email/Password** + tạo user `huyhoanghp@gmail.com` | ✅ |
+| F | Đăng ký **Web App "App Tiet Kiem"** + trích xuất `firebaseConfig` (đầy đủ 7 trường, lấy từ shadow DOM) | ✅ |
+| G | Publish **RTDB Rules**: chỉ cho phép `auth.token.email == 'huyhoanghp@gmail.com'` đọc/ghi | ✅ "Rules published" |
+| H | Dán config vào `js/firebase-config.js` → commit → push → GitHub Pages build lại | ✅ |
+| I | **Kiểm thử end-to-end trên bản live**: đăng nhập thật → seed kiểm kê 6.442.000 ₫/83 tờ → nạp thử 60.000 ₫ → 6.502.000 ₫ → xóa giao dịch test → trả về đúng 6.442.000 ₫ | ✅ 9/9 PASS, 0 JS error |
+
+### 3. Thông tin Firebase hiện tại
+
+- **Project ID**: `apptietkiem`
+- **RTDB URL**: `https://apptietkiem-default-rtdb.asia-southeast1.firebasedatabase.app`
+- **Khu vực**: asia-southeast1 (Singapore)
+- **Auth**: Email/Password, user: `huyhoanghp@gmail.com`
+- **Rules**: chỉ email trên được đọc/ghi
+- **Dữ liệu**: 9 giao dịch kiểm kê ban đầu (6.442.000 ₫ · 83 tờ · ngày 01/11/2026)
+
+⚠️ *Mật khẩu không được lưu vào repo — chỉ dùng tạm trong phiên để đăng nhập.*
+
+### 4. Kết luận phiên 2
+
+🎯 **Hoàn tất 100% toàn bộ yêu cầu.** App đang chạy thật tại
+https://huyhoanghp.github.io/app-ha-tiki/ — lưu trữ Firebase, đăng nhập bằng
+email + mật khẩu ND đã tạo.
+
+**ND có thể bắt đầu sử dụng ngay**: mở link → đăng nhập → nhập Nạp/Rút hàng ngày.
+*(Lưu ý nhỏ: khi ND đăng nhập lần đầu trên máy/điện thoại mới, Google/Firebase có thể
+hỏi thêm xác minh — dùng đúng mật khẩu đã tạo là được.)*
+
 *(Các phiên làm việc tiếp theo sẽ được ghi tiếp bên dưới)*
