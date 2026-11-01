@@ -216,4 +216,48 @@ hỏi thêm xác minh — dùng đúng mật khẩu đã tạo là được.)*
 - Sinh trắc học cần bật **riêng trên từng thiết bị** (⚙️ Cài đặt → tick 👆 + nhập mật khẩu hiện tại). Máy ND cần có Windows Hello (PIN/vân tay/khuôn mặt) hoặc iPhone Touch/Face ID.
 - Theme lưu theo thiết bị; lần đầu mở app sẽ theo theme ND đã chọn gần nhất trên tài khoản.
 
+---
+
+## PHIÊN 4 — 01/11/2026: Tự kiểm tra mobile + PWA + hướng dẫn sử dụng
+
+### 1. Yêu cầu của ND
+
+1. **Self-check** độ tương thích hiển thị trên điện thoại + đề xuất điều chỉnh
+2. **Xây dựng PWA**
+3. **Hướng dẫn sử dụng ngắn gọn** cho người mới
+
+### 2. Tự kiểm tra mobile (Playwright, 3 viewport: 390/360/375px × 4 tab + modal + login)
+
+**Kết quả kiểm tra tự động (trước chỉnh sửa): 0 lỗi nghiêm trọng** — không tràn trang,
+modal vừa màn hình, tap target hợp lệ, nút Nạp/Rút full-width.
+
+**Phát hiện & đã chỉnh:**
+| Vấn đề | Chỉnh sửa |
+|---|---|
+| Bảng Chi tiết tràn ngang 260px (8 cột nowrap) | Mobile: ẩn cột Mệnh giá / Số lượng / Nguồn-Mục đích / Ghi chú → còn Ngày, Loại, Thành tiền, Thao tác — **vừa màn hình, hết cuộn ngang** (desktop/tablet giữ nguyên đủ cột) |
+| Bảng Báo cáo tràn nhẹ | Thu nhỏ padding + font 12px → tràn còn 23px (cuộn nhẹ, chấp nhận được) |
+| Nguy cơ iOS tự zoom khi focus input (font < 16px) | Mọi input/select/textarea trên mobile = 16px |
+| Tap target nhỏ | Nút/filter min-height 44px, tab 40px |
+| iPhone tai thỏ (PWA standalone) | `viewport-fit=cover` + safe-area padding cho header/footer |
+| Thiếu phản hồi chạm | `touch-action: manipulation` + tắt tap highlight |
+
+### 3. PWA
+
+- **Icons**: tự sinh icon 💰 nền gradient xanh 192px + 512px (render qua Canvas/screenshot)
+- **manifest.webmanifest**: tên "App Tiết Kiệm", standalone, portrait, theme xanh, maskable icons
+- **sw.js** (Service Worker): precache app shell · HTML/CSS/JS **network-first** (deploy mới luôn có hiệu lực) · CDN (Chart.js, fonts, Firebase SDK) cache-first · **xem offline** khi mất mạng
+- Đăng ký SW trong `main.js` (chỉ chạy trên https/localhost); meta theme-color sáng/tối, apple-touch-icon cho iOS
+- **Verify live**: SW **ACTIVE**, manifest hợp lệ, 5 file PWA HTTP 200
+
+### 4. Hướng dẫn sử dụng
+
+- File **`HUONG_DAN_SU_DUNG.md`**: 8 mục ngắn gọn (đăng nhập + sinh trắc, cài PWA Android/iPhone/PC, nạp/rút, dashboard, chi tiết, báo cáo, cài đặt, theme, xử lý sự cố)
+- Thêm link **"📖 Hướng dẫn sử dụng cho người mới"** ở footer app
+
+### 5. Kết quả kiểm thử phiên 4
+
+**8/8 PASS** (localhost + live): SW đăng ký active · manifest hợp lệ · đăng nhập OK ·
+bảng mobile vừa màn hình · báo cáo cuộn nhẹ · link hướng dẫn hiện · 0 JS error.
+Live: 5 file PWA HTTP 200, manifest đọc được tên + 2 icons.
+
 *(Các phiên làm việc tiếp theo sẽ được ghi tiếp bên dưới)*

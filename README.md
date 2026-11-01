@@ -15,7 +15,9 @@ lưu trữ **Firebase Realtime Database**, triển khai **GitHub Pages**.
 - 🌗 **Giao diện sáng/tối**: nút 🌙/☀️ trên header, lưu theo thiết bị + đồng bộ theo tài khoản, biểu đồ đổi màu theo theme
 - 🔑 **Đổi mật khẩu** ngay trong app (Cài đặt → Bảo mật, có xác thực lại mật khẩu cũ)
 - 👆 **Đăng nhập sinh trắc học** (WebAuthn — vân tay/khuôn mặt/PIN Windows Hello/Touch ID): bật trong Cài đặt, mật khẩu được lưu trên chính thiết bị đó
-- 📱 Responsive mobile/desktop
+- 📱 **PWA**: cài lên màn hình chính điện thoại/máy tính, chạy standalone như app native, xem offline (Service Worker + manifest)
+- 📐 Tối ưu mobile: bảng tự thu gọn cột, tap target ≥ 44px, chống zoom input trên iOS, safe-area cho tai thỏ
+- 📖 Hướng dẫn người mới: [HUONG_DAN_SU_DUNG.md](HUONG_DAN_SU_DUNG.md) (cũng có link ở footer app)
 
 ## 🚀 Chạy local
 
