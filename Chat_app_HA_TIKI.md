@@ -93,4 +93,46 @@ Dữ liệu kiểm kê tiền mặt (tiền tiết kiệm) ghi ngày **Chủ nh�
 
 ---
 
+## 🎉 KẾT QUẢ PHIÊN 1 — ĐÃ HOÀN THÀNH 100%
+
+### Link chạy thực tế
+
+- 🌐 **Webapp live**: https://huyhoanghp.github.io/app-ha-tiki/
+- 📦 **Repo GitHub**: https://github.com/huyhoanghp/app-ha-tiki
+
+### Đã triển khai
+
+| Bước | Kết quả |
+|---|---|
+| B0 — File log | ✅ `Chat_app_HA_TIKI.md` |
+| B1+B4 — Giao diện | ✅ 4 tab, hero + nút to, 6 thẻ thống kê, modal, responsive |
+| B2–B5 — Logic + bảo mật | ✅ MockStore/FirebaseStore, auth email/password, Rules |
+| B3 — Seed kiểm kê | ✅ Đúng 6.442.000 ₫ / 83 tờ ngày 01/11/2026 |
+| B8 — Kiểm thử | ✅ Playwright local 26/26 phép thử đạt, live check không lỗi JS |
+| B7 — Deploy | ✅ Repo public + GitHub Pages (build thành công, HTTP 200) |
+
+### Kiểm thử chi tiết (Playwright)
+
+Seed tổng tiền, số tờ, số ngày, TB tuần/tháng/năm ✅ · Nạp tiền (400.000 ₫) ✅ ·
+Rút tiền (50.000 ₫) ✅ · Lọc theo loại ✅ · Sửa giao dịch ✅ · Xóa giao dịch (modal xác nhận) ✅ ·
+Biểu đồ tuần/tháng/năm ✅ · Bảng báo cáo có dòng Tổng ✅ · Mobile 375px ✅ · Console sạch ✅
+
+### ⏭️ Bước tiếp theo — ND cần làm (B6, ~5 phút)
+
+1. Đăng nhập https://console.firebase.google.com bằng `huyhoanghp@gmail.com` → **Add project** (tên gợi ý: `app-tietkiem`).
+2. **Build → Realtime Database → Create Database** → chọn Singapore → Start in test mode.
+3. **Build → Authentication → Get started → Email/Password → Enable** → **Add user** (email + mật khẩu của ND).
+4. **Project settings ⚙️ → General → Your apps → Web `</>`** → copy `firebaseConfig` → dán vào `js/firebase-config.js` (thay các chữ `YOUR_...`).
+5. **Realtime Database → Rules** → dán nội dung bên dưới → Publish:
+   ```json
+   {
+     "rules": {
+       ".read": "auth != null && auth.token.email == 'huyhoanghp@gmail.com'",
+       ".write": "auth != null && auth.token.email == 'huyhoanghp@gmail.com'"
+     }
+   }
+   ```
+6. Nhắn CoDev để commit + push, hoặc tự chạy: `git add . && git commit -m "config firebase" && git push`
+7. Mở lại webapp → đăng nhập → bấm **"Khởi tạo dữ liệu kiểm kê"** → dùng thật! 💰
+
 *(Các phiên làm việc tiếp theo sẽ được ghi tiếp bên dưới)*
