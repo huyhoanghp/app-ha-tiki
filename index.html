@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💰 App Tiết Kiệm — HA TIKI</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="login-screen" class="login-screen hidden">
+  <div class="login-card">
+    <div class="login-logo">💰</div>
+    <h1>App Tiết Kiệm</h1>
+    <p class="login-sub">Đăng nhập để xem sổ tiết kiệm của bạn</p>
+    <form id="login-form" autocomplete="on">
+      <input type="email" id="login-email" placeholder="📧 Email" required autocomplete="username">
+      <input type="password" id="login-pass" placeholder="🔒 Mật khẩu" required autocomplete="current-password">
+      <button type="submit" class="btn btn-primary btn-block" id="login-btn">Đăng nhập</button>
+      <div id="login-error" class="login-error hidden"></div>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">💰</span>
+        <div>
+          <div class="brand-title">App Tiết Kiệm</div>
+          <div class="brand-owner" id="header-owner"></div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="btn-icon" id="btn-settings" title="Cài đặt">⚙️</button>
+        <button class="btn-icon" id="btn-logout" title="Đăng xuất">🚪</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="dashboard">🏠 Dashboard</button>
+    <button class="tab" data-tab="nhap">📝 Nhập liệu</button>
+    <button class="tab" data-tab="chitiet">📋 Chi tiết</button>
+    <button class="tab" data-tab="baocao">📊 Báo cáo</button>
+  </nav>
+
+  <main class="main">
+
+    <section id="tab-dashboard" class="tab-panel active">
+      <div class="hero">
+        <div class="hero-left">
+          <div class="hero-label">💎 TỔNG TIỀN TIẾT KIỆM</div>
+          <div class="hero-amount" id="hero-total">0 ₫</div>
+          <div class="hero-sub" id="hero-week"></div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn-action btn-nap" id="btn-open-nap">＋ NẠP TIỀN</button>
+          <button class="btn-action btn-rut" id="btn-open-rut">－ RÚT TIỀN</button>
+        </div>
+      </div>
+
+      <div id="empty-banner" class="empty-banner hidden">
+        <div>📦 Chưa có dữ liệu. Bấm nút bên dưới để nạp bảng kiểm kê ngày 01/11/2026 (6.442.000 ₫ · 83 tờ).</div>
+        <button class="btn btn-primary" id="btn-seed">Khởi tạo dữ liệu kiểm kê</button>
+      </div>
+
+      <div class="cards" id="stat-cards"></div>
+
+      <div class="chart-section">
+        <h2>📅 Tiết kiệm theo tuần</h2>
+        <div class="chart-box"><canvas id="chart-week"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <h2>🗓️ Tiết kiệm theo tháng</h2>
+        <div class="chart-box"><canvas id="chart-month"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <h2>📈 Tiết kiệm theo năm</h2>
+        <div class="chart-box"><canvas id="chart-year"></canvas></div>
+      </div>
+    </section>
+
+    <section id="tab-nhap" class="tab-panel">
+      <div class="panel-title">📝 Nhập dữ liệu tiết kiệm</div>
+      <div class="quick-actions">
+        <button class="btn-action btn-nap big" id="btn-open-nap-2">＋ NẠP TIỀN</button>
+        <button class="btn-action btn-rut big" id="btn-open-rut-2">－ RÚT TIỀN</button>
+      </div>
+      <div class="panel-card">
+        <h3>⏱️ Giao dịch hôm nay</h3>
+        <div id="today-list" class="today-list"></div>
+      </div>
+      <div class="panel-card tip-card">
+        <h3>💡 Mẹo nhỏ</h3>
+        <p>Mỗi tuần hãy bấm <b>＋ NẠP TIỀN</b> và chọn mệnh giá + số tờ bạn vừa bỏ heo đất.
+        Mỗi 9 tuần app sẽ tự tính lại chu kỳ — chúc bạn tiết kiệm thật nhiều! 🐷</p>
+      </div>
+    </section>
+
+    <section id="tab-chitiet" class="tab-panel">
+      <div class="panel-title">📋 Dữ liệu chi tiết</div>
+      <div class="filters no-print">
+        <select id="f-type">
+          <option value="">Tất cả</option>
+          <option value="nap">Nạp tiền</option>
+          <option value="rut">Rút tiền</option>
+        </select>
+        <input type="date" id="f-from" title="Từ ngày">
+        <input type="date" id="f-to" title="Đến ngày">
+        <input type="text" id="f-search" placeholder="🔍 Tìm nguồn/mục đích/ghi chú...">
+        <button class="btn btn-ghost" id="f-clear">Xóa lọc</button>
+      </div>
+      <div class="panel-card table-card">
+        <div class="table-scroll">
+          <table id="detail-table">
+            <thead>
+              <tr>
+                <th>Ngày</th><th>Loại</th><th>Mệnh giá</th><th>Số lượng</th>
+                <th>Thành tiền</th><th>Nguồn / Mục đích</th><th>Ghi chú</th><th class="no-print">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="detail-body"></tbody>
+          </table>
+        </div>
+        <div class="table-summary" id="detail-summary"></div>
+      </div>
+    </section>
+
+    <section id="tab-baocao" class="tab-panel">
+      <div class="panel-title">📊 Báo cáo tổng hợp</div>
+      <div class="report-period" id="report-period-cards"></div>
+      <div class="panel-card">
+        <h3>📅 Theo tuần</h3>
+        <div class="table-scroll"><table class="report-table" id="table-week"></table></div>
+      </div>
+      <div class="panel-card">
+        <h3>🗓️ Theo tháng</h3>
+        <div class="table-scroll"><table class="report-table" id="table-month"></table></div>
+      </div>
+      <div class="panel-card">
+        <h3>📈 Theo năm</h3>
+        <div class="table-scroll"><table class="report-table" id="table-year"></table></div>
+      </div>
+      <div class="report-actions no-print">
+        <button class="btn btn-primary" id="btn-email">📧 Gửi báo cáo email</button>
+        <button class="btn btn-gold" id="btn-copy">📋 Sao chép báo cáo</button>
+        <button class="btn btn-ghost" id="btn-csv">⬇️ Xuất CSV</button>
+        <button class="btn btn-ghost" id="btn-print">🖨️ In báo cáo</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">App Tiết Kiệm — made with 💚 for Hải Anh</footer>
+</div>
+
+<div class="modal-backdrop hidden" id="modal-tx">
+  <div class="modal">
+    <div class="modal-header" id="modal-tx-title">Nạp tiền</div>
+    <form id="tx-form" class="modal-body">
+      <label>Ngày tháng
+        <input type="date" id="tx-date" required>
+      </label>
+      <label>Mệnh giá
+        <select id="tx-denom"></select>
+      </label>
+      <label>Số lượng (tờ)
+        <input type="number" id="tx-qty" min="1" step="1" value="1" required>
+      </label>
+      <div class="tx-amount" id="tx-amount">Thành tiền: 0 ₫</div>
+      <label id="tx-source-wrap">Nguồn tiền
+        <input type="text" id="tx-source" list="dl-sources" placeholder="Chọn hoặc nhập nguồn tiền">
+      </label>
+      <label id="tx-purpose-wrap" class="hidden">Mục đích chi
+        <input type="text" id="tx-purpose" list="dl-purposes" placeholder="Chọn hoặc nhập mục đích">
+      </label>
+      <label>Ghi chú
+        <input type="text" id="tx-note" placeholder="Tùy chọn">
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="tx-cancel">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="tx-save">💾 Lưu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="modal-settings">
+  <div class="modal modal-wide">
+    <div class="modal-header">⚙️ Cài đặt</div>
+    <form id="settings-form" class="modal-body">
+      <label>Chủ sở hữu
+        <input type="text" id="st-owner" required>
+      </label>
+      <div class="st-row">
+        <label>Ngày bắt đầu tiết kiệm
+          <input type="date" id="st-start" required>
+        </label>
+        <label>Chu kỳ (số tuần)
+          <input type="number" id="st-cycle" min="1" max="52" required>
+        </label>
+      </div>
+      <label>Nguồn tiền (mỗi dòng một lựa chọn)
+        <textarea id="st-sources" rows="4"></textarea>
+      </label>
+      <label>Mục đích chi (mỗi dòng một lựa chọn)
+        <textarea id="st-purposes" rows="4"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="st-cancel">Hủy</button>
+        <button type="submit" class="btn btn-primary">💾 Lưu cài đặt</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="modal-confirm">
+  <div class="modal modal-small">
+    <div class="modal-header">❓ Xác nhận</div>
+    <div class="modal-body">
+      <p id="confirm-msg"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="confirm-no">Hủy</button>
+        <button type="button" class="btn btn-danger" id="confirm-yes">Đồng ý</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<datalist id="dl-sources"></datalist>
+<datalist id="dl-purposes"></datalist>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/report.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
