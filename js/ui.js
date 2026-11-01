@@ -3,6 +3,235 @@
 let toastTimer = null;
 let confirmAction = null;
 
+/* ================= THEME ================= */
+
+const THEME_KEY = 'tk_theme';
+
+function applyTheme(theme, save) {
+  const t = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = t;
+  try {
+    if (save) localStorage.setItem(THEME_KEY, t);
+    else localStorage.removeItem(THEME_KEY);
+  } catch (e) {}
+  const icon = $id('btn-theme');
+  if (icon) icon.textContent = t === 'dark' ? '☀️' : '🌙';
+  if (typeof renderCharts === 'function' && state.user) renderCharts();
+}
+
+function initTheme() {
+  let t = null;
+  try { t = localStorage.getItem(THEME_KEY); } catch (e) {}
+  applyTheme(t || state.settings.theme || 'light', !!t);
+}
+
+async function toggleTheme() {
+  const next = isDarkTheme() ? 'light' : 'dark';
+  applyTheme(next, true);
+  state.settings.theme = next;
+  try { await store.saveSettings(state.settings); } catch (e) {}
+}
+
+/* ================= BIOMETRIC (WebAuthn) ================= */
+
+const BIO_KEY = 'tk_biocreds';
+
+function bioGetAll() {
+  try { return JSON.parse(localStorage.getItem(BIO_KEY)) || {}; } catch (e) { return {}; }
+}
+
+function bioSet(email, data) {
+  const all = bioGetAll();
+  all[email] = data;
+  localStorage.setItem(BIO_KEY, JSON.stringify(all));
+}
+
+function bioRemove(email) {
+  const all = bioGetAll();
+  delete all[email];
+  localStorage.setItem(BIO_KEY, JSON.stringify(all));
+}
+
+function obfuscate(s) {
+  const k = 'tk2026';
+  let out = '';
+  for (let i = 0; i < s.length; i++) out += String.fromCharCode(s.charCodeAt(i) ^ k.charCodeAt(i % k.length));
+  return btoa(unescape(encodeURIComponent(out)));
+}
+
+function deobfuscate(b) {
+  const k = 'tk2026';
+  const s = decodeURIComponent(escape(atob(b)));
+  let out = '';
+  for (let i = 0; i < s.length; i++) out += String.fromCharCode(s.charCodeAt(i) ^ k.charCodeAt(i % k.length));
+  return out;
+}
+
+function b64urlEncode(buf) {
+  return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function b64urlDecode(s) {
+  const b = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(b, (c) => c.charCodeAt(0));
+}
+
+async function bioAvailable() {
+  try {
+    return !!(window.PublicKeyCredential
+      && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable
+      && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+  } catch (e) { return false; }
+}
+
+function updateBioLoginVisibility() {
+  const wrap = $id('bio-login-wrap');
+  if (!wrap) return;
+  const entries = Object.entries(bioGetAll());
+  if (entries.length) {
+    const [email] = entries[0];
+    wrap.classList.remove('hidden');
+    $id('bio-login-email').textContent = '🔐 ' + email;
+  } else {
+    wrap.classList.add('hidden');
+  }
+}
+
+async function bioLogin() {
+  const entries = Object.entries(bioGetAll());
+  if (!entries.length) return;
+  const [email, data] = entries[0];
+  const btn = $id('btn-bio-login');
+  try {
+    btn.disabled = true;
+    btn.textContent = '⏳ Đang xác thực...';
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: challenge,
+        allowCredentials: [{ id: b64urlDecode(data.credId), type: 'public-key' }],
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    if (assertion) {
+      $id('login-email').value = email;
+      $id('login-pass').value = deobfuscate(data.pwd);
+      $id('login-form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+  } catch (err) {
+    toast('❌ Xác thực sinh trắc không thành công');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '👆 Đăng nhập bằng sinh trắc học';
+  }
+}
+
+async function toggleBioSetting(enabled) {
+  if (!isFirebase) { $id('st-bio').checked = false; toast('🔒 Chỉ dùng được khi kết nối Firebase'); return; }
+  const email = state.user && state.user.email;
+  if (!email) return;
+  if (!enabled) {
+    bioRemove(email);
+    toast('✅ Đã tắt đăng nhập bằng sinh trắc học trên thiết bị này');
+    updateBioNote();
+    return;
+  }
+  if (!(await bioAvailable())) {
+    $id('st-bio').checked = false;
+    toast('❌ Thiết bị này không hỗ trợ sinh trắc học (Windows Hello / Touch ID)');
+    updateBioNote();
+    return;
+  }
+  const pwd = $id('st-curpass').value;
+  if (!pwd) {
+    $id('st-bio').checked = false;
+    toast('⚠️ Nhập "Mật khẩu hiện tại" bên trên trước khi bật sinh trắc học');
+    return;
+  }
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: 'App Tiet Kiem' },
+        user: {
+          id: crypto.getRandomValues(new Uint8Array(16)),
+          name: email,
+          displayName: state.settings.owner || email
+        },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required',
+          residentKey: 'preferred'
+        },
+        timeout: 60000,
+        attestation: 'none'
+      }
+    });
+    bioSet(email, { credId: b64urlEncode(cred.rawId), pwd: obfuscate(pwd) });
+    toast('✅ Đã bật đăng nhập bằng sinh trắc học trên thiết bị này');
+    updateBioNote();
+    updateBioLoginVisibility();
+  } catch (err) {
+    $id('st-bio').checked = false;
+    toast('❌ Không bật được sinh trắc học: ' + (err.message || 'bị hủy'));
+  }
+}
+
+function updateBioNote() {
+  const note = $id('bio-note');
+  if (!note) return;
+  bioAvailable().then((ok) => {
+    const email = state.user && state.user.email;
+    const on = email && !!bioGetAll()[email];
+    if (!ok) note.textContent = 'Thiết bị/trình duyệt này không hỗ trợ WebAuthn sinh trắc. Dùng Chrome/Edge trên máy có Windows Hello, hoặc iPhone (Safari) có Face ID/Touch ID.';
+    else if (on) note.textContent = 'Đang BẬT cho ' + email + ' — ở màn hình đăng nhập sẽ có nút đăng nhập bằng sinh trắc học.';
+    else note.textContent = 'Đang TẮT. Bật để đăng nhập nhanh bằng vân tay/khuôn mặt/PIN trên thiết bị này (cần nhập mật khẩu hiện tại bên trên).';
+  });
+}
+
+/* ================= PASSWORD CHANGE ================= */
+
+async function changePassword() {
+  if (!isFirebase) { toast('🔒 Chỉ dùng được khi kết nối Firebase'); return; }
+  const cur = $id('st-curpass').value;
+  const nw = $id('st-newpass').value;
+  const nw2 = $id('st-newpass2').value;
+  if (!cur || !nw) { toast('⚠️ Nhập mật khẩu hiện tại và mật khẩu mới'); return; }
+  if (nw.length < 6) { toast('⚠️ Mật khẩu mới tối thiểu 6 ký tự'); return; }
+  if (nw !== nw2) { toast('⚠️ Mật khẩu nhập lại không khớp'); return; }
+  const btn = $id('btn-changepass');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang xử lý...';
+  try {
+    const cred = firebase.auth.EmailAuthProvider.credential(state.user.email, cur);
+    await firebase.auth().currentUser.reauthenticateWithCredential(cred);
+    await firebase.auth().currentUser.updatePassword(nw);
+    $id('st-curpass').value = '';
+    $id('st-newpass').value = '';
+    $id('st-newpass2').value = '';
+    const all = bioGetAll();
+    if (all[state.user.email]) {
+      all[state.user.email].pwd = obfuscate(nw);
+      localStorage.setItem(BIO_KEY, JSON.stringify(all));
+    }
+    toast('✅ Đã đổi mật khẩu thành công');
+  } catch (err) {
+    const code = (err && err.code) || '';
+    if (code.indexOf('wrong-password') > -1 || code.indexOf('invalid-credential') > -1) toast('❌ Mật khẩu hiện tại không đúng');
+    else if (code.indexOf('weak-password') > -1) toast('❌ Mật khẩu mới quá yếu (tối thiểu 6 ký tự)');
+    else if (code.indexOf('requires-recent-login') > -1) toast('❌ Phiên đăng nhập đã cũ — hãy đăng xuất rồi đăng nhập lại');
+    else if (code.indexOf('too-many-requests') > -1) toast('❌ Thử quá nhiều lần, đợi ít phút rồi thử lại');
+    else toast('❌ Lỗi: ' + (err.message || 'không rõ'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔑 Đổi mật khẩu';
+  }
+}
+
 /* ================= RENDER ================= */
 
 function renderAll() {
@@ -224,6 +453,19 @@ function openSettings() {
   $id('st-cycle').value = s.cycleWeeks;
   $id('st-sources').value = (s.sources || []).join('\n');
   $id('st-purposes').value = (s.purposes || []).join('\n');
+  const securityVisible = isFirebase;
+  $id('st-security-divider').classList.toggle('hidden', !securityVisible);
+  $id('st-curpass').parentElement.classList.toggle('hidden', !securityVisible);
+  $id('st-newpass').parentElement.classList.toggle('hidden', !securityVisible);
+  $id('st-newpass2').parentElement.classList.toggle('hidden', !securityVisible);
+  $id('btn-changepass').classList.toggle('hidden', !securityVisible);
+  $id('st-bio').parentElement.classList.toggle('hidden', !securityVisible);
+  $id('bio-note').classList.toggle('hidden', !securityVisible);
+  if (securityVisible) {
+    const email = state.user && state.user.email;
+    $id('st-bio').checked = !!(email && bioGetAll()[email]);
+    updateBioNote();
+  }
   $id('modal-settings').classList.remove('hidden');
 }
 
@@ -234,6 +476,7 @@ async function submitSettings(e) {
     owner: $id('st-owner').value.trim() || DEFAULT_SETTINGS.owner,
     startDate: $id('st-start').value || SEED_DATE,
     cycleWeeks: parseInt($id('st-cycle').value, 10) || 9,
+    theme: state.settings.theme || 'light',
     sources: lines($id('st-sources').value),
     purposes: lines($id('st-purposes').value)
   };
@@ -258,6 +501,7 @@ function onAuthChanged() {
   } else {
     loginScreen.classList.remove('hidden');
     $id('app').classList.add('hidden');
+    updateBioLoginVisibility();
   }
 }
 
@@ -286,6 +530,10 @@ function bindUI() {
   $id('modal-tx').addEventListener('click', (e) => { if (e.target === $id('modal-tx')) closeTxModal(); });
 
   $id('btn-settings').addEventListener('click', openSettings);
+  $id('btn-theme').addEventListener('click', toggleTheme);
+  $id('btn-changepass').addEventListener('click', changePassword);
+  $id('st-bio').addEventListener('change', (e) => toggleBioSetting(e.target.checked));
+  $id('btn-bio-login').addEventListener('click', bioLogin);
   $id('st-cancel').addEventListener('click', () => $id('modal-settings').classList.add('hidden'));
   $id('settings-form').addEventListener('submit', submitSettings);
   $id('modal-settings').addEventListener('click', (e) => { if (e.target === $id('modal-settings')) $id('modal-settings').classList.add('hidden'); });
@@ -384,6 +632,7 @@ function bindUI() {
 /* ================= APP INIT ================= */
 
 function initApp() {
+  initTheme();
   bindUI();
   if (!isFirebase) {
     store = MockStore;

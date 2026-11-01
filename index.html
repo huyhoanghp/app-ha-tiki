@@ -23,6 +23,11 @@
       <button type="submit" class="btn btn-primary btn-block" id="login-btn">Đăng nhập</button>
       <div id="login-error" class="login-error hidden"></div>
     </form>
+    <div id="bio-login-wrap" class="hidden">
+      <div class="bio-divider">hoặc</div>
+      <button type="button" class="btn btn-gold btn-block" id="btn-bio-login">👆 Đăng nhập bằng sinh trắc học</button>
+      <div class="bio-email" id="bio-login-email"></div>
+    </div>
   </div>
 </div>
 
@@ -37,6 +42,7 @@
         </div>
       </div>
       <div class="header-right">
+        <button class="btn-icon" id="btn-theme" title="Chuyển giao diện sáng/tối">🌙</button>
         <button class="btn-icon" id="btn-settings" title="Cài đặt">⚙️</button>
         <button class="btn-icon" id="btn-logout" title="Đăng xuất">🚪</button>
       </div>
@@ -212,6 +218,26 @@
       <label>Mục đích chi (mỗi dòng một lựa chọn)
         <textarea id="st-purposes" rows="4"></textarea>
       </label>
+      <div class="st-divider" id="st-security-divider">🔒 Bảo mật &amp; đăng nhập</div>
+      <div class="st-row">
+        <label>Mật khẩu hiện tại
+          <input type="password" id="st-curpass" autocomplete="current-password" placeholder="Để đổi mật khẩu / bật sinh trắc">
+        </label>
+        <label>Mật khẩu mới
+          <input type="password" id="st-newpass" autocomplete="new-password" placeholder="Tối thiểu 6 ký tự">
+        </label>
+      </div>
+      <div class="st-row">
+        <label>Nhập lại mật khẩu mới
+          <input type="password" id="st-newpass2" autocomplete="new-password">
+        </label>
+        <button type="button" class="btn btn-primary" id="btn-changepass">🔑 Đổi mật khẩu</button>
+      </div>
+      <label class="bio-toggle-row">
+        <input type="checkbox" id="st-bio">
+        <span>👆 Đăng nhập bằng sinh trắc học trên thiết bị này (vân tay / khuôn mặt / PIN Windows Hello)</span>
+      </label>
+      <div class="bio-note" id="bio-note"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="st-cancel">Hủy</button>
         <button type="submit" class="btn btn-primary">💾 Lưu cài đặt</button>

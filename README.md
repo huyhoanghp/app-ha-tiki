@@ -12,6 +12,9 @@ lưu trữ **Firebase Realtime Database**, triển khai **GitHub Pages**.
 - 📈 **Báo cáo tổng hợp**: theo tuần/tháng/năm, thẻ tuần này/tháng này/năm nay
 - 📧 **Gửi báo cáo email** (mailto), 📋 sao chép, ⬇️ xuất CSV, 🖨️ in báo cáo
 - 🔒 Đăng nhập Firebase Email/Password + Realtime Database Rules
+- 🌗 **Giao diện sáng/tối**: nút 🌙/☀️ trên header, lưu theo thiết bị + đồng bộ theo tài khoản, biểu đồ đổi màu theo theme
+- 🔑 **Đổi mật khẩu** ngay trong app (Cài đặt → Bảo mật, có xác thực lại mật khẩu cũ)
+- 👆 **Đăng nhập sinh trắc học** (WebAuthn — vân tay/khuôn mặt/PIN Windows Hello/Touch ID): bật trong Cài đặt, mật khẩu được lưu trên chính thiết bị đó
 - 📱 Responsive mobile/desktop
 
 ## 🚀 Chạy local
@@ -38,14 +41,24 @@ npx http-server -p 8080
 ```json
 {
   "rules": {
-    ".read": "auth != null && auth.token.email == 'huyhoanghp@gmail.com'",
-    ".write": "auth != null && auth.token.email == 'huyhoanghp@gmail.com'"
+    ".read": "auth != null && (auth.token.email == 'huyhoanghp@gmail.com' || auth.token.email == 'anhnhh150612@gmail.com')",
+    ".write": "auth != null && (auth.token.email == 'huyhoanghp@gmail.com' || auth.token.email == 'anhnhh150612@gmail.com')"
   }
 }
 ```
 
 7. Reload app → hiện màn hình đăng nhập → đăng nhập bằng email/mật khẩu đã tạo ở bước 3.
 8. Dữ liệu trống → bấm **"Khởi tạo dữ liệu kiểm kê"** để nạp bảng kiểm kê 01/11/2026.
+
+## 👥 Tài khoản được cấp quyền
+
+| Tài khoản | Mật khẩu mặc định | Ghi chú |
+|---|---|---|
+| `huyhoanghp@gmail.com` | (ND tự đặt) | Chủ sở hữu |
+| `anhnhh150612@gmail.com` | `123456` | Nên đổi ngay trong app: ⚙️ Cài đặt → 🔑 Đổi mật khẩu |
+
+Muốn thêm tài khoản khác: tạo user trong Firebase Authentication rồi thêm email vào
+Rules ở trên (thay cả 2 dòng `.read` và `.write`).
 
 > Lưu ý: nếu Firebase Console bắt xác thực khu vực (App Check / billing), bỏ qua App Check —
 > Rules ở bước 6 đã đủ bảo vệ dữ liệu cho app cá nhân.

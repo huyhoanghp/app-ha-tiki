@@ -178,4 +178,42 @@ email + mật khẩu ND đã tạo.
 *(Lưu ý nhỏ: khi ND đăng nhập lần đầu trên máy/điện thoại mới, Google/Firebase có thể
 hỏi thêm xác minh — dùng đúng mật khẩu đã tạo là được.)*
 
+---
+
+## PHIÊN 3 — 01/11/2026: Tài khoản phụ + đổi mật khẩu + theme sáng/tối + sinh trắc học
+
+### 1. Yêu cầu mới của ND
+
+1. Tạo sẵn tài khoản được quyền sử dụng app: `anhnhh150612@gmail.com`, mật khẩu mặc định `123456`
+2. Cài đặt trong app cho phép **thay đổi mật khẩu** tài khoản
+3. **Giao diện sáng/tối** linh hoạt, màu sắc chính xác trên từng theme
+4. Cho phép **đăng nhập bằng sinh trắc học**
+
+### 2. Thực hiện
+
+| Công việc | Cách làm | Kết quả |
+|---|---|---|
+| Tạo tài khoản phụ | Firebase REST API `accounts:signUp` (không cần mở console) | ✅ localId `ftySElOsQ7SXT0DalBZNkSbpEK42` |
+| Cập nhật RTDB Rules | Playwright mở Console (dùng lại phiên đăng nhập cũ) → paste rules mới cho phép cả 2 email → Publish | ✅ |
+| Theme sáng/tối | Toàn bộ CSS chuyển sang biến (`:root` + `html[data-theme="dark"]`), nút 🌙/☀️ trên header; lưu localStorage (theo thiết bị) + đồng bộ theme theo tài khoản trên Firebase; Chart.js tự đổi màu grid/label/cột theo theme | ✅ |
+| Đổi mật khẩu | ⚙️ Cài đặt → 🔒 Bảo mật: mật khẩu hiện tại + mới + nhập lại → reauthenticateWithCredential → updatePassword; xử lý đủ các lỗi (sai MK, yếu, cần đăng nhập lại); tự cập nhật mật khẩu lưu cho sinh trắc | ✅ |
+| Sinh trắc học | WebAuthn platform authenticator (Windows Hello / Touch ID / Face ID): bật trong Cài đặt (cần nhập MK hiện tại để lưu đăng nhập nhanh); ở màn hình đăng nhập có nút "👆 Đăng nhập bằng sinh trắc học"; mật khẩu lưu obfuscated trong localStorage của thiết bị | ✅ code + fallback khi thiết bị không hỗ trợ |
+
+### 3. Kiểm thử (local = Firebase thật)
+
+**20 phép thử — 18 PASS, 2 "FAIL" do kịch bản test quên theme được lưu theo thiết bị (toggle thực tế đúng cả 2 lần, ảnh chụp xác nhận):**
+- ✅ Đăng nhập `anhnhh150612@gmail.com` / `123456`
+- ✅ Nút sinh trắc học ẩn khi chưa đăng ký; hiện ghi chú đúng trạng thái
+- ✅ Theme sáng↔tối: icon đổi 🌙↔☀️, giữ nguyên sau khi reload trang
+- ✅ Dark mode: card/bảng/charts/toast/modal hiển thị màu chính xác (đã xem ảnh chụp)
+- ✅ Đổi mật khẩu: sai MK cũ → báo lỗi; đúng → thành công; đăng xuất → đăng nhập bằng MK mới OK; đổi trả lại `123456` OK
+- ✅ Account chính: tổng tiền 6.442.000 ₫, charts render đẹp trong dark mode
+- ✅ 0 JS error
+
+### 4. Lưu ý cho ND
+
+- Mật khẩu mặc định `123456` của `anhnhh150612@gmail.com` nên đổi ngay trong app (⚙️ → 🔒 Bảo mật).
+- Sinh trắc học cần bật **riêng trên từng thiết bị** (⚙️ Cài đặt → tick 👆 + nhập mật khẩu hiện tại). Máy ND cần có Windows Hello (PIN/vân tay/khuôn mặt) hoặc iPhone Touch/Face ID.
+- Theme lưu theo thiết bị; lần đầu mở app sẽ theo theme ND đã chọn gần nhất trên tài khoản.
+
 *(Các phiên làm việc tiếp theo sẽ được ghi tiếp bên dưới)*

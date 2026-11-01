@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
   owner: 'NGUYỄN HOÀNG HẢI ANH',
   cycleWeeks: 9,
   startDate: '2026-11-01',
+  theme: 'light',
   sources: ['Kiểm kê đầu kỳ', 'Tiền lương', 'Thưởng', 'Tiết kiệm hàng tuần', 'Khác'],
   purposes: ['Mua sắm', 'Chi tiêu cá nhân', 'Quà tặng', 'Khác']
 };
@@ -22,7 +23,8 @@ const state = {
   transactions: [],
   txMode: 'nap',
   editId: null,
-  dataReady: false
+  dataReady: false,
+  dataLoaded: false
 };
 
 let store = null;
@@ -211,8 +213,15 @@ function normalizeData(data) {
 
 function handleData(data) {
   const n = normalizeData(data);
+  const firstLoad = !state.dataLoaded;
   state.settings = n.settings;
   state.transactions = n.transactions;
+  state.dataLoaded = true;
+  if (firstLoad && typeof applyTheme === 'function') {
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+    applyTheme(saved || n.settings.theme || 'light', !!saved);
+  }
   renderAll();
 }
 
