@@ -60,6 +60,17 @@ function renderReport() {
   $id('table-week').innerHTML = reportTable('week');
   $id('table-month').innerHTML = reportTable('month');
   $id('table-year').innerHTML = reportTable('year');
+  if ($id('tab-baocao').classList.contains('active') && typeof renderReportCharts === 'function') renderReportCharts();
+}
+
+function fillPrintMeta() {
+  const s = computeStats();
+  const now = new Date();
+  const gen = now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  $id('print-meta').innerHTML =
+    '<div>Chủ sở hữu: <b>' + escHtml(state.settings.owner) + '</b></div>' +
+    '<div>Ngày xuất: ' + gen + '</div>' +
+    '<div>Tổng tiền tiết kiệm: <b>' + fmtVND(s.total) + '</b> (' + s.totalQty + ' tờ)</div>';
 }
 
 function buildReportText() {
@@ -146,4 +157,182 @@ function exportCSV() {
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
   toast('⬇️ Đã xuất file CSV');
+}
+
+/* ================= XLSX ================= */
+
+let exceljsLoading = null;
+
+function loadExcelJS() {
+  if (window.ExcelJS) return Promise.resolve();
+  if (exceljsLoading) return exceljsLoading;
+  exceljsLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => {
+      exceljsLoading = null;
+      reject(new Error('Không tải được thư viện ExcelJS — kiểm tra kết nối mạng'));
+    };
+    document.head.appendChild(s);
+  });
+  return exceljsLoading;
+}
+
+function thinBorder() {
+  return {
+    top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+    left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+    bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+    right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+  };
+}
+
+function xlsxPeriods(type, n) {
+  return lastNPeriods(type, n).map((p) => {
+    const s = sumPeriod(type, p.key);
+    return {
+      label: periodLabel(type, p.key),
+      nap: s.nap,
+      rut: s.rut,
+      net: s.net,
+      count: s.count
+    };
+  });
+}
+
+function xlsxSection(ws, row, title, periods) {
+  ws.mergeCells('A' + row + ':E' + row);
+  const t = ws.getCell('A' + row);
+  t.value = title;
+  t.font = { bold: true, size: 12, color: { argb: 'FF15803D' } };
+  row++;
+  const header = ['Kỳ', 'Số GD', 'Nạp', 'Rút', 'Ròng'];
+  header.forEach((h, i) => {
+    const c = ws.getCell(row, i + 1);
+    c.value = h;
+    c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF15803D' } };
+    c.alignment = { horizontal: 'center' };
+    c.border = thinBorder();
+  });
+  row++;
+  let tN = 0, tR = 0, tC = 0;
+  periods.forEach((p, idx) => {
+    tN += p.nap; tR += p.rut; tC += p.count;
+    const vals = [p.label, p.count, p.nap, p.rut, p.net];
+    vals.forEach((v, i) => {
+      const c = ws.getCell(row, i + 1);
+      c.value = v;
+      c.border = thinBorder();
+      if (i >= 1) c.alignment = { horizontal: 'right' };
+      if (i >= 2) c.numFmt = '#,##0 "₫"';
+      if (i === 4) c.font = { bold: true, color: { argb: v >= 0 ? 'FF166534' : 'FFB91C1C' } };
+      else if (idx % 2 === 1) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FDF4' } };
+    });
+    row++;
+  });
+  const tot = ['Tổng', tC, tN, tR, tN - tR];
+  tot.forEach((v, i) => {
+    const c = ws.getCell(row, i + 1);
+    c.value = v;
+    c.font = { bold: true };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } };
+    c.border = thinBorder();
+    if (i >= 1) c.alignment = { horizontal: 'right' };
+    if (i >= 2) c.numFmt = '#,##0 "₫"';
+  });
+  return row + 1;
+}
+
+function xlsxAddChart(wb, ws, row, chart) {
+  if (!chart || !chart.canvas) return row;
+  try {
+    const canvas = chart.canvas;
+    if (!canvas.width || !canvas.height) return row;
+    const ratio = canvas.height / canvas.width;
+    const imgId = wb.addImage({ base64: chart.toBase64Image('image/png', 1), extension: 'png' });
+    const width = 620;
+    const height = Math.round(width * ratio);
+    ws.addImage(imgId, { tl: { col: 0, row: row }, ext: { width: width, height: height } });
+    return row + Math.ceil(height / 19) + 2;
+  } catch (e) {
+    return row;
+  }
+}
+
+async function exportXLSX() {
+  if (!$id('tab-baocao').classList.contains('active')) switchTab('baocao');
+  const btn = $id('btn-xlsx');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang tạo file...';
+  try {
+    await loadExcelJS();
+    await new Promise((r) => setTimeout(r, 400));
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'App Tiet Kiem';
+    const ws = wb.addWorksheet('Bao cao', {
+      pageSetup: { orientation: 'portrait', fitToPage: true, fitToWidth: 1 },
+      views: [{ showGridLines: false }]
+    });
+    ws.columns = [{ width: 16 }, { width: 10 }, { width: 17 }, { width: 17 }, { width: 17 }];
+    const s = computeStats();
+    const now = new Date();
+    const gen = now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+    ws.mergeCells('A1:E1');
+    const title = ws.getCell('A1');
+    title.value = '📊 BÁO CÁO TIẾT KIỆM';
+    title.font = { bold: true, size: 18, color: { argb: 'FFFFFFFF' } };
+    title.alignment = { horizontal: 'center', vertical: 'middle' };
+    title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF15803D' } };
+    ws.getRow(1).height = 34;
+
+    ws.mergeCells('A2:E2');
+    ws.getCell('A2').value = 'Chủ sở hữu: ' + state.settings.owner;
+    ws.mergeCells('A3:E3');
+    ws.getCell('A3').value = 'Ngày xuất báo cáo: ' + gen;
+    ws.mergeCells('A4:E4');
+    const totCell = ws.getCell('A4');
+    totCell.value = '💰 Tổng tiền tiết kiệm: ' + fmtVND(s.total) + '  (' + s.totalQty + ' tờ)';
+    totCell.font = { bold: true, size: 13, color: { argb: 'FF166534' } };
+
+    let row = 6;
+    ws.mergeCells('A' + row + ':E' + row);
+    const trendTitle = ws.getCell('A' + row);
+    trendTitle.value = '📈 XU HƯỚNG GẦN ĐÂY';
+    trendTitle.font = { bold: true, size: 12 };
+    trendTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } };
+    row++;
+    const trend = [];
+    for (const type of ['week', 'month', 'year']) {
+      const ps = xlsxPeriods(type, 2);
+      trend.push(Object.assign({}, ps[1], { label: (type === 'week' ? 'Tuần này' : type === 'month' ? 'Tháng này' : 'Năm nay') + ' (' + ps[1].label + ')' }));
+      trend.push(Object.assign({}, ps[0], { label: (type === 'week' ? 'Tuần trước' : type === 'month' ? 'Tháng trước' : 'Năm trước') + ' (' + ps[0].label + ')' }));
+    }
+    row = xlsxSection(ws, row, '', trend);
+
+    row = xlsxSection(ws, row, '📅 THEO TUẦN (12 tuần gần nhất)', xlsxPeriods('week', 12));
+    row = xlsxAddChart(wb, ws, row, chartWeekR);
+    row = xlsxSection(ws, row, '🗓️ THEO THÁNG (12 tháng gần nhất)', xlsxPeriods('month', 12));
+    row = xlsxAddChart(wb, ws, row, chartMonthR);
+    row = xlsxSection(ws, row, '📈 THEO NĂM', xlsxPeriods('year', 6));
+    row = xlsxAddChart(wb, ws, row, chartYearR);
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'bao-cao-tiet-kiem_' + todayStr() + '.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    toast('📊 Đã xuất file XLSX đẹp');
+  } catch (err) {
+    toast('❌ ' + (err.message || 'Lỗi tạo file XLSX'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📊 Xuất XLSX (báo cáo đẹp)';
+  }
 }

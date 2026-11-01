@@ -1,9 +1,10 @@
 'use strict';
 
-const CACHE_NAME = 'tietkiem-v1';
+const CACHE_NAME = 'tietkiem-v2';
 const APP_SHELL = [
   './',
   './index.html',
+  './huong-dan.html',
   './manifest.webmanifest',
   './css/style.css',
   './js/firebase-config.js',

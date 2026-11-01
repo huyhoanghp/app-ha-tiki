@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16a34a" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c141f" media="(prefers-color-scheme: dark)">
+<title>📖 Hướng dẫn sử dụng — App Tiết Kiệm</title>
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.gd-wrap { max-width: 820px; margin: 0 auto; padding: 20px 16px 40px; }
+.gd-header {
+  background: var(--header-grad); color: #fff; border-radius: 20px;
+  padding: 26px 24px; margin-bottom: 20px; box-shadow: var(--shadow-lg);
+}
+.gd-header h1 { font-size: 24px; font-weight: 800; }
+.gd-header p { font-size: 14px; opacity: .93; margin-top: 6px; line-height: 1.6; }
+.gd-header a { color: #fff; font-weight: 700; }
+.gd-section {
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 20px; margin-bottom: 14px;
+}
+.gd-section h2 {
+  font-size: 17px; font-weight: 800; color: var(--green-dark); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.gd-section p, .gd-section li { font-size: 14.5px; line-height: 1.7; color: var(--text); }
+.gd-section ul, .gd-section ol { padding-left: 22px; display: grid; gap: 6px; }
+.gd-section b { color: var(--green-dark); }
+.gd-tip {
+  background: var(--green-light); border-left: 4px solid var(--green);
+  border-radius: 10px; padding: 10px 14px; margin-top: 10px;
+  font-size: 13.5px; color: var(--green-dark); font-weight: 600; line-height: 1.6;
+}
+.gd-warn {
+  background: var(--empty-bg); border-left: 4px solid var(--gold);
+  border-radius: 10px; padding: 10px 14px; margin-top: 10px;
+  font-size: 13.5px; color: var(--empty-text); font-weight: 600; line-height: 1.6;
+}
+.gd-steps { counter-reset: step; list-style: none; padding-left: 0 !important; }
+.gd-steps li {
+  counter-increment: step; position: relative; padding-left: 40px; min-height: 30px;
+}
+.gd-steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 2px;
+  width: 26px; height: 26px; border-radius: 50%; background: var(--green);
+  color: #fff; font-weight: 800; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+.gd-back {
+  display: inline-block; margin-top: 6px; padding: 11px 22px; border-radius: 12px;
+  background: var(--green); color: #fff; font-weight: 700; text-decoration: none; font-size: 14.5px;
+}
+@media (max-width: 640px) {
+  .gd-wrap { padding: 12px 10px 30px; }
+  .gd-section { padding: 15px 14px; }
+  .gd-header { padding: 20px 16px; }
+  .gd-header h1 { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="gd-wrap">
+  <div class="gd-header">
+    <h1>📖 Hướng dẫn sử dụng — App Tiết Kiệm</h1>
+    <p>App quản lý heo đất tiền tiết kiệm của <b>NGUYỄN HOÀNG HẢI ANH</b><br>
+    🌐 Mở app: <a href="https://huyhoanghp.github.io/app-ha-tiki/">https://huyhoanghp.github.io/app-ha-tiki/</a></p>
+  </div>
+
+  <div class="gd-section">
+    <h2>1. 🔐 Đăng nhập</h2>
+    <ul>
+      <li>Nhập <b>email + mật khẩu</b> → bấm <b>Đăng nhập</b>.</li>
+      <li><b>Đăng nhập nhanh (sinh trắc / PIN)</b>: đăng nhập 1 lần bằng mật khẩu → ⚙️ Cài đặt → tick 👆 <i>Đăng nhập bằng sinh trắc học</i> + nhập mật khẩu hiện tại.</li>
+      <li>Thiết bị hỗ trợ (Windows Hello, Touch ID, Face ID) sẽ dùng <b>vân tay / khuôn mặt</b>. Thiết bị không hỗ trợ (một số máy Android như Xiaomi/Redmi) app sẽ tự hỏi <b>tạo PIN 4–6 số</b> — lần sau chỉ cần nhập PIN là vào app.</li>
+    </ul>
+  </div>
+
+  <div class="gd-section">
+    <h2>2. 📱 Cài app lên điện thoại (dùng như app thật)</h2>
+    <ul class="gd-steps">
+      <li><b>Android (Chrome)</b>: mở app → bấm biểu tượng <b>ⓘ / ⋮</b> trên thanh địa chỉ → <b>Thêm vào Màn hình chính</b> → <b>Cài đặt</b>.</li>
+      <li><b>iPhone (Safari)</b>: nút <b>Chia sẻ ⬆️</b> → <b>Thêm vào Màn hình chính</b> → <b>Thêm</b>.</li>
+      <li><b>Máy tính (Chrome/Edge)</b>: biểu tượng <b>⬇️ / ⊕</b> trên thanh địa chỉ → <b>Cài đặt</b>.</li>
+    </ul>
+    <div class="gd-tip">Sau khi cài: app mở full màn hình, có icon riêng 💰, vẫn xem được offline.</div>
+  </div>
+
+  <div class="gd-section">
+    <h2>3. 💰 Nạp tiền / 💸 Rút tiền</h2>
+    <ol class="gd-steps">
+      <li>Bấm nút to <b>＋ NẠP TIỀN</b> (xanh) hoặc <b>－ RÚT TIỀN</b> (đỏ).</li>
+      <li><b>Ngày tháng</b> — bấm vào ô để mở lịch, chọn ngày (mặc định hôm nay).</li>
+      <li><b>Mệnh giá</b> — bấm ô để mở danh sách 500k → 1k.</li>
+      <li><b>Số lượng (tờ)</b> — app tự tính Thành tiền.</li>
+      <li><b>Nguồn tiền</b> (khi nạp) hoặc <b>Mục đích chi</b> (khi rút) — chọn gợi ý hoặc bấm <b>✏️ Nhập khác...</b> để gõ nội dung mới.</li>
+      <li>Bấm <b>💾 Lưu</b> → dữ liệu lưu ngay lên cloud (Firebase).</li>
+    </ol>
+  </div>
+
+  <div class="gd-section">
+    <h2>4. 🏠 Dashboard</h2>
+    <ul>
+      <li><b>Tổng tiền</b> hiện có, số tờ, số ngày đã tiết kiệm, trung bình theo tuần / tháng / năm.</li>
+      <li><b>3 thẻ xu hướng</b> Tuần này / Tháng này / Năm nay — kèm mũi tên <b>▲ xanh</b> (tiết kiệm nhiều hơn kỳ trước) hoặc <b>▼ đỏ</b> (ít hơn).</li>
+      <li>🔁 <b>Tuần X của chu kỳ 9 tuần</b> — tự đếm lại mỗi 9 tuần.</li>
+      <li>3 biểu đồ cột: theo tuần → tháng → năm (cuộn xuống để xem hết).</li>
+    </ul>
+  </div>
+
+  <div class="gd-section">
+    <h2>5. 📋 Xem &amp; sửa dữ liệu</h2>
+    <ul>
+      <li>Tab <b>Chi tiết</b>: lọc theo <b>Loại</b> / <b>Từ ngày – Đến ngày</b> (bấm ô lịch để chọn) / từ khóa.</li>
+      <li>Nút <b>✏️ Sửa</b> để chỉnh, <b>🗑️</b> để xóa (có hỏi lại trước khi xóa).</li>
+      <li>Bấm <b>Xóa lọc</b> để xem lại tất cả.</li>
+    </ul>
+  </div>
+
+  <div class="gd-section">
+    <h2>6. 📊 Báo cáo (kèm biểu đồ + xuất XLSX)</h2>
+    <ul>
+      <li>Tổng hợp tuần này/tháng này/năm nay + <b>3 biểu đồ</b> + bảng chi tiết theo tuần/tháng/năm.</li>
+      <li><b>📊 Xuất XLSX</b> — file Excel trình bày đẹp: tiêu đề xanh, bảng có viền, số tiền căn phải, kèm ảnh biểu đồ. Mở bằng Excel/Google Sheets, gửi Zalo/email đều được.</li>
+      <li><b>📧 Gửi báo cáo email</b> — soạn sẵn nội dung, gửi cho ai tùy ý.</li>
+      <li><b>📋 Sao chép</b> · <b>⬇️ Xuất CSV</b> · <b>🖨️ In</b> — bản in có header đẹp (tên chủ sở hữu, ngày xuất, tổng tiền).</li>
+    </ul>
+  </div>
+
+  <div class="gd-section">
+    <h2>7. ⚙️ Cài đặt (nút bánh răng)</h2>
+    <ul>
+      <li><b>Chủ sở hữu</b>: đổi tên hiển thị.</li>
+      <li><b>Ngày bắt đầu</b> (bấm để mở lịch) &amp; <b>chu kỳ (số tuần)</b>.</li>
+      <li><b>Nguồn tiền / Mục đích chi</b>: sửa danh sách gợi ý (mỗi dòng một lựa chọn).</li>
+      <li><b>🔒 Đổi mật khẩu</b> cho tài khoản đang đăng nhập.</li>
+      <li><b>👆 Bật/tắt đăng nhập nhanh</b> cho thiết bị này.</li>
+    </ul>
+  </div>
+
+  <div class="gd-section">
+    <h2>8. 🌗 Giao diện sáng/tối</h2>
+    <p>Nút <b>🌙 / ☀️</b> góc phải trên — đổi ngay, app nhớ lựa chọn cho lần sau.</p>
+  </div>
+
+  <div class="gd-section">
+    <h2>❓ Gặp vấn đề?</h2>
+    <ul>
+      <li><b>Quên mật khẩu</b> → báo chủ app tạo lại trong Firebase Console, hoặc dùng tài khoản phụ.</li>
+      <li><b>Số liệu chưa cập nhật</b> → kéo để tải lại trang (kéo xuống trên điện thoại, hoặc F5).</li>
+      <li><b>Đăng nhập nhanh báo lỗi</b> trên một số máy Android → thiết bị chặn WebAuthn; hãy dùng PIN dự phòng hoặc mật khẩu, rồi bật lại trong Cài đặt.</li>
+    </ul>
+    <div class="gd-warn">Lưu ý: app lưu dữ liệu trên Firebase cloud của chủ app — cần internet để cập nhật.</div>
+  </div>
+
+  <a class="gd-back" href="index.html">← Về app Tiết Kiệm</a>
+</div>
+</body>
+</html>

@@ -3,6 +3,9 @@
 let chartWeek = null;
 let chartMonth = null;
 let chartYear = null;
+let chartWeekR = null;
+let chartMonthR = null;
+let chartYearR = null;
 
 function isDarkTheme() {
   return document.documentElement.dataset.theme === 'dark';
@@ -28,6 +31,7 @@ function barOptions() {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    animation: { duration: 300 },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -51,7 +55,6 @@ function barOptions() {
 }
 
 function weekEntries(n) {
-  const map = groupBy('week');
   return lastNPeriods('week', n).map((p) => ({
     label: fmtDateVN(p.from).slice(0, 5),
     value: sumPeriod('week', p.key).net
@@ -71,29 +74,32 @@ function yearEntries() {
   return sortedKeys(map, false).map((k) => ({ label: k, value: map[k].nap - map[k].rut }));
 }
 
+function buildBar(canvasId, entries) {
+  const el = $id(canvasId);
+  if (!el) return null;
+  return new Chart(el, {
+    type: 'bar',
+    data: barDatasetFor(entries),
+    options: barOptions()
+  });
+}
+
 function renderCharts() {
   if (typeof Chart === 'undefined') return;
+  if (chartWeek) chartWeek.destroy();
+  if (chartMonth) chartMonth.destroy();
+  if (chartYear) chartYear.destroy();
+  chartWeek = buildBar('chart-week', weekEntries(12));
+  chartMonth = buildBar('chart-month', monthEntries(12));
+  chartYear = buildBar('chart-year', yearEntries());
+}
 
-  const destroy = (c) => { if (c) c.destroy(); };
-
-  destroy(chartWeek);
-  chartWeek = new Chart($id('chart-week'), {
-    type: 'bar',
-    data: barDatasetFor(weekEntries(12)),
-    options: barOptions()
-  });
-
-  destroy(chartMonth);
-  chartMonth = new Chart($id('chart-month'), {
-    type: 'bar',
-    data: barDatasetFor(monthEntries(12)),
-    options: barOptions()
-  });
-
-  destroy(chartYear);
-  chartYear = new Chart($id('chart-year'), {
-    type: 'bar',
-    data: barDatasetFor(yearEntries()),
-    options: barOptions()
-  });
+function renderReportCharts() {
+  if (typeof Chart === 'undefined') return;
+  if (chartWeekR) chartWeekR.destroy();
+  if (chartMonthR) chartMonthR.destroy();
+  if (chartYearR) chartYearR.destroy();
+  chartWeekR = buildBar('chart-week-r', weekEntries(12));
+  chartMonthR = buildBar('chart-month-r', monthEntries(12));
+  chartYearR = buildBar('chart-year-r', yearEntries());
 }

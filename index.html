@@ -33,7 +33,7 @@
     </form>
     <div id="bio-login-wrap" class="hidden">
       <div class="bio-divider">hoặc</div>
-      <button type="button" class="btn btn-gold btn-block" id="btn-bio-login">👆 Đăng nhập bằng sinh trắc học</button>
+      <button type="button" class="btn btn-gold btn-block" id="btn-bio-login">👆 Đăng nhập nhanh (sinh trắc / PIN)</button>
       <div class="bio-email" id="bio-login-email"></div>
     </div>
   </div>
@@ -85,6 +85,7 @@
       </div>
 
       <div class="cards" id="stat-cards"></div>
+      <div class="trend-cards" id="trend-cards"></div>
 
       <div class="chart-section">
         <h2>📅 Tiết kiệm theo tuần</h2>
@@ -120,13 +121,19 @@
     <section id="tab-chitiet" class="tab-panel">
       <div class="panel-title">📋 Dữ liệu chi tiết</div>
       <div class="filters no-print">
-        <select id="f-type">
-          <option value="">Tất cả</option>
-          <option value="nap">Nạp tiền</option>
-          <option value="rut">Rút tiền</option>
-        </select>
-        <input type="date" id="f-from" title="Từ ngày">
-        <input type="date" id="f-to" title="Đến ngày">
+        <div class="combo" id="f-type-combo">
+          <input type="text" id="f-type" class="combo-input" readonly placeholder="Tất cả loại" data-value="">
+          <span class="combo-btn">▾</span>
+          <div class="combo-menu hidden" id="f-type-menu"></div>
+        </div>
+        <div class="date-wrap filter-date">
+          <input type="text" id="f-from" class="date-field" readonly placeholder="Từ ngày" data-iso="" data-optional="1">
+          <span class="date-ico">📅</span>
+        </div>
+        <div class="date-wrap filter-date">
+          <input type="text" id="f-to" class="date-field" readonly placeholder="Đến ngày" data-iso="" data-optional="1">
+          <span class="date-ico">📅</span>
+        </div>
         <input type="text" id="f-search" placeholder="🔍 Tìm nguồn/mục đích/ghi chú...">
         <button class="btn btn-ghost" id="f-clear">Xóa lọc</button>
       </div>
@@ -147,8 +154,24 @@
     </section>
 
     <section id="tab-baocao" class="tab-panel">
+      <div class="print-header" id="print-header">
+        <h1>📊 BÁO CÁO TIẾT KIỆM</h1>
+        <div id="print-meta"></div>
+      </div>
       <div class="panel-title">📊 Báo cáo tổng hợp</div>
       <div class="report-period" id="report-period-cards"></div>
+      <div class="chart-section">
+        <h2>📅 Tiết kiệm theo tuần</h2>
+        <div class="chart-box"><canvas id="chart-week-r"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <h2>🗓️ Tiết kiệm theo tháng</h2>
+        <div class="chart-box"><canvas id="chart-month-r"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <h2>📈 Tiết kiệm theo năm</h2>
+        <div class="chart-box"><canvas id="chart-year-r"></canvas></div>
+      </div>
       <div class="panel-card">
         <h3>📅 Theo tuần</h3>
         <div class="table-scroll"><table class="report-table" id="table-week"></table></div>
@@ -163,7 +186,8 @@
       </div>
       <div class="report-actions no-print">
         <button class="btn btn-primary" id="btn-email">📧 Gửi báo cáo email</button>
-        <button class="btn btn-gold" id="btn-copy">📋 Sao chép báo cáo</button>
+        <button class="btn btn-gold" id="btn-xlsx">📊 Xuất XLSX (báo cáo đẹp)</button>
+        <button class="btn btn-ghost" id="btn-copy">📋 Sao chép</button>
         <button class="btn btn-ghost" id="btn-csv">⬇️ Xuất CSV</button>
         <button class="btn btn-ghost" id="btn-print">🖨️ In báo cáo</button>
       </div>
@@ -172,7 +196,7 @@
   </main>
 
   <footer class="footer">App Tiết Kiệm — made with 💚 for Hải Anh
-    <div><a class="footer-link" href="HUONG_DAN_SU_DUNG.md" target="_blank" rel="noopener">📖 Hướng dẫn sử dụng cho người mới</a></div>
+    <div><a class="footer-link" href="huong-dan.html" target="_blank" rel="noopener">📖 Hướng dẫn sử dụng cho người mới</a></div>
   </footer>
 </div>
 
@@ -180,22 +204,37 @@
   <div class="modal">
     <div class="modal-header" id="modal-tx-title">Nạp tiền</div>
     <form id="tx-form" class="modal-body">
-      <label>Ngày tháng
-        <input type="date" id="tx-date" required>
-      </label>
-      <label>Mệnh giá
-        <select id="tx-denom"></select>
-      </label>
+      <div class="field">Ngày tháng
+        <div class="date-wrap">
+          <input type="text" id="tx-date" class="date-field" readonly placeholder="Chọn ngày" data-iso="">
+          <span class="date-ico">📅</span>
+        </div>
+      </div>
+      <div class="field">Mệnh giá
+        <div class="combo" id="tx-denom-combo">
+          <input type="text" id="tx-denom" class="combo-input" readonly placeholder="Chọn mệnh giá" data-value="">
+          <span class="combo-btn">▾</span>
+          <div class="combo-menu hidden" id="tx-denom-menu"></div>
+        </div>
+      </div>
       <label>Số lượng (tờ)
         <input type="number" id="tx-qty" min="1" step="1" value="1" required>
       </label>
       <div class="tx-amount" id="tx-amount">Thành tiền: 0 ₫</div>
-      <label id="tx-source-wrap">Nguồn tiền
-        <input type="text" id="tx-source" list="dl-sources" placeholder="Chọn hoặc nhập nguồn tiền">
-      </label>
-      <label id="tx-purpose-wrap" class="hidden">Mục đích chi
-        <input type="text" id="tx-purpose" list="dl-purposes" placeholder="Chọn hoặc nhập mục đích">
-      </label>
+      <div class="field" id="tx-source-wrap">Nguồn tiền
+        <div class="combo" id="tx-source-combo">
+          <input type="text" id="tx-source" class="combo-input" readonly placeholder="Chọn hoặc nhập nguồn tiền" data-value="">
+          <span class="combo-btn">▾</span>
+          <div class="combo-menu hidden" id="tx-source-menu"></div>
+        </div>
+      </div>
+      <div class="field hidden" id="tx-purpose-wrap">Mục đích chi
+        <div class="combo" id="tx-purpose-combo">
+          <input type="text" id="tx-purpose" class="combo-input" readonly placeholder="Chọn hoặc nhập mục đích" data-value="">
+          <span class="combo-btn">▾</span>
+          <div class="combo-menu hidden" id="tx-purpose-menu"></div>
+        </div>
+      </div>
       <label>Ghi chú
         <input type="text" id="tx-note" placeholder="Tùy chọn">
       </label>
@@ -215,9 +254,12 @@
         <input type="text" id="st-owner" required>
       </label>
       <div class="st-row">
-        <label>Ngày bắt đầu tiết kiệm
-          <input type="date" id="st-start" required>
-        </label>
+        <div class="field">Ngày bắt đầu tiết kiệm
+          <div class="date-wrap">
+            <input type="text" id="st-start" class="date-field" readonly placeholder="Chọn ngày" data-iso="">
+            <span class="date-ico">📅</span>
+          </div>
+        </div>
         <label>Chu kỳ (số tuần)
           <input type="number" id="st-cycle" min="1" max="52" required>
         </label>
@@ -269,10 +311,41 @@
   </div>
 </div>
 
-<div id="toast" class="toast hidden"></div>
+<div class="modal-backdrop hidden" id="modal-date">
+  <div class="modal modal-small">
+    <div class="modal-header">📅 Chọn ngày</div>
+    <div class="modal-body">
+      <div class="cal-nav">
+        <button type="button" class="btn-icon" id="cal-prev">◀</button>
+        <div class="cal-title" id="cal-title"></div>
+        <button type="button" class="btn-icon" id="cal-next">▶</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="modal-actions cal-actions">
+        <button type="button" class="btn btn-ghost" id="cal-clear">Xóa</button>
+        <button type="button" class="btn btn-ghost" id="cal-today">Hôm nay</button>
+        <button type="button" class="btn btn-primary" id="cal-close">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-<datalist id="dl-sources"></datalist>
-<datalist id="dl-purposes"></datalist>
+<div class="modal-backdrop hidden" id="modal-pin">
+  <div class="modal modal-small">
+    <div class="modal-header" id="pin-title">🔐 Nhập PIN</div>
+    <div class="modal-body">
+      <p class="pin-sub" id="pin-sub"></p>
+      <input type="password" id="pin-input" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off">
+      <input type="password" id="pin-input2" inputmode="numeric" maxlength="6" placeholder="Nhập lại PIN" autocomplete="off">
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="pin-cancel">Hủy</button>
+        <button type="button" class="btn btn-primary" id="pin-ok">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
