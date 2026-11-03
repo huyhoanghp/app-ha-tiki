@@ -73,6 +73,7 @@
 | 5 | **Fix sinh trắc lỗi trên Android (Redmi/Xiaomi)** → fallback **PIN nhanh 4–6 số** tự tạo trong app | 5 | ✅ |
 | 6 | Nút đăng nhập nhanh: "👆 Đăng nhập nhanh (sinh trắc / PIN)" | 5 | ✅ |
 | 7 | **Tự động đăng xuất khi rời app > 5 phút** (chọn phương án "rời app" sau khi CoDev hỏi lại) | 5 | ✅ |
+| 8 | **Đa user — mỗi user 1 CSDL riêng biệt** + màn đăng ký có duyệt + admin panel 👥 | 5 | ✅ |
 
 ## A7. Giao diện & PWA
 
@@ -260,6 +261,53 @@ danh sách giao dịch (`computeStats()`: tổng = Σ nạp − Σ rút; số t�
   xóa nhầm thì phải tạo lại giao dịch thủ công (ngày + mệnh giá + số tờ + nguồn/mục đích).
 
 ---
+
+
+## C8. Bổ sung giữa phiên: Đa user — mỗi user 1 CSDL riêng + đăng ký chờ duyệt
+
+**Yêu cầu ND:** "cho phép tạo nhiều user, mỗi user là 1 CSDL riêng biệt".
+ND chốt: (1) data hiện tại **giữ cho cả 2 user đang có**, user mới bắt đầu trống;
+(2) thêm **màn đăng ký nhưng ND phải duyệt**; (3) chủ app là **admin**.
+
+### Kiến trúc mới (RTDB)
+
+```
+/users/{uid}/settings          ← CSDL riêng của từng user
+/users/{uid}/transactions/{id}
+/approvals/{uid}               ← sổ duyệt: {email, name, status: pending|approved|denied, createdAt, decidedAt}
+/ (legacy root data)           ← chỉ admin đọc (backup, đã copy xong)
+```
+
+**Rules:** `/users/$uid` = `auth.uid === $uid` (cách ly tuyệt đối, thêm user mới KHÔNG cần sửa rules) ·
+`/approvals/$uid` = user tự tạo 1 lần khi đăng ký (không sửa/xóa được), admin đọc+sửa toàn bộ ·
+root = chỉ `huyhoanghp@gmail.com` (admin).
+
+### Đã làm
+
+| Việc | Chi tiết |
+|---|---|
+| Migrate data | Copy `/` → `/users/{uid-huyhoanghp}` + `/users/{uid-anhnhh150612}` (REST, token chủ app). ⚠️ lần 1 PUT bị **hỏng encoding tiếng Việt** (PS 5.1 gửi body Latin-1) — đã re-migrate bằng UTF-8 bytes, verify chuẩn. Dọn rác "Test nhập khác" khỏi sources khi migrate |
+| Rules | Publish qua Playwright console (session gcp-state.json); verify bằng REST: user A đọc path user B → **401 BLOCKED**, tự đọc/ghi path mình → 200 |
+| Code | `FirebaseStore`: mọi path thêm `users/{uid}/` + fix bug off() sai path khi đăng xuất (stale listener) · thêm `signUp/getApproval/listApprovals/setApprovalStatus` · `state.accessGranted` gate chặn render khi chưa duyệt |
+| UI | Login screen: view Đăng ký (họ tên/email/mật khẩu×2) + notice "📨 Đã gửi yêu cầu" · màn hình **⏳ chờ duyệt / ⛔ bị từ chối** (nút Kiểm tra lại + Đăng xuất) · **👥 Quản lý người dùng** (chỉ admin): bảng xếp chờ-duyệt lên đầu, nút ✅ Duyệt / ❌ Từ chối / ✅ Chấp nhận lại / ❌ Thu hồi |
+| SW | bump `tietkiem-v4` |
+
+### Kiểm thử (Playwright — S1→S8 ALL PASS, 0 console error)
+
+- ✅ Chủ app: data nguyên vẹn 6.392.000 ₫/10 tx · nút 👥 hiện; tài khoản phụ: data copy y hệt, nút 👥 ẩn
+- ✅ **Cách ly**: acc2 nạp 100k → hero acc2 6.492.000 ₫, path chủ app VẪN 6.392.000 ₫/10 tx (REST verify)
+- ✅ Đăng ký user mới → bản ghi `pending` trong /approvals → đăng nhập → màn "⏳ chờ duyệt", app bị chặn
+- ✅ Admin duyệt qua UI 👥 → user đăng nhập lại → **CSDL TRỐNG 0 ₫** + banner khởi tạo → seed → 6.442.000 ₫
+- ✅ Admin từ chối → user đăng nhập → "⛔ Yêu cầu bị từ chối", không vào được
+- ✅ Panel admin hiển thị đúng 3 trạng thái; cleanup test user sạch sẽ (data + approvals + Auth account)
+- ✅ Data thật cuối phiên: cả 2 user đều 6.392.000 ₫ / 82 tờ / 10 tx
+
+### Cách tạo/duyệt user từ giờ
+
+1. **Người mới tự đăng ký** ở màn login (📝 Đăng ký tài khoản mới) → chờ.
+2. **ND đăng nhập** `huyhoanghp@gmail.com` → bấm **👥** → ✅ Duyệt (hoặc ❌ Từ chối).
+3. Người được duyệt đăng nhập lại → CSDL riêng trống → tự bấm "Khởi tạo dữ liệu kiểm kê" nếu muốn.
+
 
 # 📌 PHẦN D — GHI CHÚ KỸ THUẬT & QUY ƯỢC
 
