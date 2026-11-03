@@ -72,6 +72,7 @@
 | 4 | Đăng nhập sinh trắc học (WebAuthn) | 3 | ✅ |
 | 5 | **Fix sinh trắc lỗi trên Android (Redmi/Xiaomi)** → fallback **PIN nhanh 4–6 số** tự tạo trong app | 5 | ✅ |
 | 6 | Nút đăng nhập nhanh: "👆 Đăng nhập nhanh (sinh trắc / PIN)" | 5 | ✅ |
+| 7 | **Tự động đăng xuất khi rời app > 5 phút** (chọn phương án "rời app" sau khi CoDev hỏi lại) | 5 | ✅ |
 
 ## A7. Giao diện & PWA
 
@@ -215,6 +216,48 @@ menu vừa đóng tự mở lại, che các field bên dưới. **Fix gốc**: t
 ⚠️ Đăng nhập `huyhoanghp@gmail.com` bằng mật khẩu `huyhoang*12` bị Firebase trả
 `INVALID_LOGIN_CREDENTIALS` — **ND đã tự đổi mật khẩu tài khoản chính** (có thể trên điện thoại).
 Để ND xác nhận mật khẩu mới; nếu quên, chủ app có thể reset trong Firebase Console.
+
+## C6. Bổ sung giữa phiên: Tự động đăng xuất khi rời app > 5 phút
+
+**Yêu cầu ND:** "khi user tắt app trong vòng 5 phút thì tự động signout".
+CoDev hỏi rõ → ND chọn phương án **"Rời app > 5 phút"** (không phải idle-timeout).
+
+**Cách làm (js/main.js — `initSessionGuard`):**
+- Mốc thời gian hoạt động lưu `localStorage['tk_last_active']` (`touchSession`): cập nhật khi
+  app bị ẩn (`visibilitychange` → hidden), mỗi 30s khi app đang mở, và khi đóng trang
+  (`pagehide`/`beforeunload`).
+- **Quay lại app** (visibilitychange → visible) hoặc **mở lại app sau khi tắt**: nếu
+  `Date.now() - mốc > 5 phút` → `store.signOut()` + toast "🔒 Bạn đã rời app quá 5 phút —
+  vui lòng đăng nhập lại" + đóng mọi modal đang mở.
+- Phân biệt **đăng nhập thủ công** (flag `__freshLogin`, reset mốc) với **khôi phục phiên tự động**
+  của Firebase khi mở app (chỉ kiểm tra hết hạn, không reset mốc) — tránh vòng lặp đăng xuất.
+- Sau khi bị đăng xuất: màn hình đăng nhập hiện kèm nút **👆 Đăng nhập nhanh (sinh trắc / PIN)**
+  nên vào lại app vẫn chỉ mất 2 giây.
+
+**Kiểm thử (Playwright — 5/5 PASS):** đăng nhập → mô phỏng rời 6 phút quay lại → tự đăng xuất
++ toast đúng · đăng nhập lại OK · reload trong 5 phút → vẫn đăng nhập · restore-path với mốc
+7 phút cũ → tự đăng xuất · 0 console error. *(Lưu ý test: reload thật sẽ restamp mốc qua
+visibilitychange của trang cũ — đúng hành vi production; test restore-path bằng cách gọi lại
+`onAuthChanged()` với `__authChecked=false`.)*
+
+## C7. Làm rõ của ND: Xóa bản ghi nạp/rút ảnh hưởng tổng tiền thế nào?
+
+**Cơ chế:** App **KHÔNG lưu số dư riêng** — tổng tiền trong ví luôn được tính lại tức thời từ
+danh sách giao dịch (`computeStats()`: tổng = Σ nạp − Σ rút; số tờ = Σ tờ nạp − Σ tờ rút).
+
+| Thao tác | Ảnh hưởng đến tổng tiền ví | Số tờ |
+|---|---|---|
+| 🗑️ Xóa bản ghi **NẠP** 200.000 ₫ (2 tờ 100k) | **Giảm 200.000 ₫** (như tiền chưa từng bỏ vào) | Giảm 2 tờ |
+| 🗑️ Xóa bản ghi **RÚT** 50.000 ₫ (1 tờ 50k) | **Tăng lại 50.000 ₫** (tiền "quay lại" ví) | Tăng 1 tờ |
+| ✏️ Sửa bản ghi | Tổng recalc theo số tiền mới | Recalc |
+
+- Ví dụ với dữ liệu hiện tại 6.442.000 ₫ / 83 tờ: xóa 1 bản ghi nạp 200k → còn **6.242.000 ₫ / 81 tờ**.
+- Mọi thứ cập nhật **ngay lập tức và đồng bộ mọi thiết bị** qua Firebase: hero tổng tiền,
+  thẻ thống kê, thẻ xu hướng ▲▼, 3+3 biểu đồ, bảng báo cáo, file XLSX/CSV/email xuất sau đó.
+- "Số ngày đã tiết kiệm" = đếm số ngày **có giao dịch nạp** — xóa bản ghi nạp duy nhất của
+  một ngày thì ngày đó không còn được tính.
+- ⚠️ **Xóa là vĩnh viễn, không có undo** — app có hộp thoại xác nhận trước khi xóa, nhưng nếu
+  xóa nhầm thì phải tạo lại giao dịch thủ công (ngày + mệnh giá + số tờ + nguồn/mục đích).
 
 ---
 
