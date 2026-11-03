@@ -24,7 +24,8 @@ const state = {
   txMode: 'nap',
   editId: null,
   dataReady: false,
-  dataLoaded: false
+  dataLoaded: false,
+  accessGranted: false
 };
 
 let store = null;
@@ -151,8 +152,34 @@ const MockStore = {
 
 const FirebaseStore = {
   _db: null,
+  _uid: null,
   async signIn(email, pass) {
     return firebase.auth().signInWithEmailAndPassword(email, pass);
+  },
+  async signUp(email, pass, name) {
+    const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+    const uid = cred.user.uid;
+    const profile = {
+      email: email,
+      name: name || email,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    await this._db.ref('approvals/' + uid).set(profile);
+    await firebase.auth().signOut();
+    return uid;
+  },
+  async getApproval(uid) {
+    if (!this._db || !uid) return null;
+    const snap = await this._db.ref('approvals/' + uid).once('value');
+    return snap.val();
+  },
+  async listApprovals() {
+    const snap = await this._db.ref('approvals').once('value');
+    return snap.val() || {};
+  },
+  async setApprovalStatus(uid, status) {
+    await this._db.ref('approvals/' + uid).update({ status: status, decidedAt: new Date().toISOString() });
   },
   async signOut() {
     return firebase.auth().signOut();
@@ -161,38 +188,43 @@ const FirebaseStore = {
     firebase.initializeApp(firebaseConfig);
     this._db = firebase.database();
     firebase.auth().onAuthStateChanged((user) => {
-      state.user = user ? { email: user.email } : null;
+      state.user = user ? { email: user.email, uid: user.uid } : null;
       state.dataReady = false;
+      if (this._watching) {
+        this._db.ref('users/' + this._watching).off();
+        this._watching = null;
+      }
+      this._uid = user ? user.uid : null;
       onAuthChanged();
       if (user) {
-        this._db.ref('/').on('value', (snap) => {
+        this._watching = user.uid;
+        this._db.ref('users/' + user.uid).on('value', (snap) => {
           state.dataReady = true;
           onData(snap.val());
         }, (err) => onErr(err));
       } else {
-        this._db.ref('/').off();
         onData(null);
       }
     });
   },
   async addTransaction(tx) {
-    return this._db.ref('transactions').push(tx);
+    return this._db.ref('users/' + this._uid + '/transactions').push(tx);
   },
   async updateTransaction(id, tx) {
-    return this._db.ref('transactions/' + id).update(tx);
+    return this._db.ref('users/' + this._uid + '/transactions/' + id).update(tx);
   },
   async deleteTransaction(id) {
-    return this._db.ref('transactions/' + id).remove();
+    return this._db.ref('users/' + this._uid + '/transactions/' + id).remove();
   },
   async saveSettings(settings) {
-    return this._db.ref('settings').set(settings);
+    return this._db.ref('users/' + this._uid + '/settings').set(settings);
   },
   async seedInventory() {
-    const snap = await this._db.ref('transactions').once('value');
+    const snap = await this._db.ref('users/' + this._uid + '/transactions').once('value');
     if (snap.exists()) return;
     const txs = seedTransactions();
     for (const t of txs) {
-      await this._db.ref('transactions').push(t);
+      await this._db.ref('users/' + this._uid + '/transactions').push(t);
     }
   }
 };

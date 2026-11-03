@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'tietkiem-v3';
+const CACHE_NAME = 'tietkiem-v4';
 const APP_SHELL = [
   './',
   './index.html',

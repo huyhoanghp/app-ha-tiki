@@ -475,7 +475,7 @@ async function changePassword() {
 
 function renderAll() {
   const app = $id('app');
-  if (!state.user) {
+  if (!state.user || !state.accessGranted) {
     app.classList.add('hidden');
     return;
   }
@@ -766,8 +766,11 @@ async function submitSettings(e) {
 
 function onAuthChanged() {
   const loginScreen = $id('login-screen');
+  const pendingScreen = $id('pending-screen');
   if (state.user) {
+    if (window.__signingUp) return;
     loginScreen.classList.add('hidden');
+    pendingScreen.classList.add('hidden');
     if (!window.__authChecked) {
       window.__authChecked = true;
       if (!window.__freshLogin && typeof sessionExpired === 'function' && sessionExpired()) {
@@ -775,13 +778,146 @@ function onAuthChanged() {
       }
     }
     if (typeof touchSession === 'function') touchSession();
-    if (isFirebase) toast('👋 Xin chào, ' + (state.user.email || ''));
-    renderAll();
+    checkApprovalThenEnter();
   } else {
+    state.accessGranted = false;
+    pendingScreen.classList.add('hidden');
     loginScreen.classList.remove('hidden');
     $id('app').classList.add('hidden');
     updateBioLoginVisibility();
   }
+}
+
+async function checkApprovalThenEnter() {
+  if (!isFirebase) {
+    $id('btn-users').classList.add('hidden');
+    state.accessGranted = true;
+    renderAll();
+    return;
+  }
+  const admin = state.user.email === ADMIN_EMAIL;
+  $id('btn-users').classList.toggle('hidden', !admin);
+  try {
+    const ap = await store.getApproval(state.user.uid);
+    if (ap && ap.status === 'pending') {
+      state.accessGranted = false;
+      showPendingScreen('pending');
+      return;
+    }
+    if (ap && ap.status === 'denied') {
+      state.accessGranted = false;
+      showPendingScreen('denied');
+      return;
+    }
+    state.accessGranted = true;
+    if (isFirebase) toast('👋 Xin chào, ' + (state.user.email || ''));
+    renderAll();
+  } catch (e) {
+    state.accessGranted = true;
+    renderAll();
+  }
+}
+
+function showPendingScreen(kind) {
+  $id('app').classList.add('hidden');
+  $id('pending-icon').textContent = kind === 'denied' ? '⛔' : '⏳';
+  $id('pending-title').textContent = kind === 'denied' ? 'Yêu cầu bị từ chối' : 'Tài khoản đang chờ duyệt';
+  $id('pending-msg').textContent = kind === 'denied'
+    ? 'Chủ app đã từ chối yêu cầu đăng ký của tài khoản này. Liên hệ chủ app nếu cần thiết lập lại.'
+    : 'Yêu cầu đăng ký của bạn đã được gửi tới chủ app. Sau khi được duyệt, bấm "Kiểm tra lại" hoặc đăng nhập lại.';
+  $id('pending-email').textContent = '🔐 ' + (state.user.email || '');
+  $id('pending-screen').classList.remove('hidden');
+}
+
+function showSignupView() {
+  $id('login-view').classList.add('hidden');
+  $id('signup-view').classList.remove('hidden');
+  $id('login-notice').classList.add('hidden');
+  $id('signup-error').classList.add('hidden');
+  $id('signup-name').focus();
+}
+
+function showLoginView() {
+  $id('signup-view').classList.add('hidden');
+  $id('login-view').classList.remove('hidden');
+}
+
+function signupErrorText(err) {
+  const code = (err && err.code) || '';
+  if (code.indexOf('email-already-in-use') > -1) return 'Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.';
+  if (code.indexOf('invalid-email') > -1) return 'Email không hợp lệ.';
+  if (code.indexOf('weak-password') > -1) return 'Mật khẩu quá yếu (tối thiểu 6 ký tự).';
+  if (code.indexOf('network') > -1) return 'Lỗi kết nối mạng.';
+  return 'Không đăng ký được: ' + (err && err.message ? err.message : 'lỗi không rõ');
+}
+
+async function submitSignup(e) {
+  e.preventDefault();
+  const errEl = $id('signup-error');
+  errEl.classList.add('hidden');
+  const name = $id('signup-name').value.trim();
+  const email = $id('signup-email').value.trim();
+  const p1 = $id('signup-pass').value;
+  const p2 = $id('signup-pass2').value;
+  if (!name) { errEl.textContent = '⚠️ Hãy nhập họ tên của bạn'; errEl.classList.remove('hidden'); return; }
+  if (p1 !== p2) { errEl.textContent = '⚠️ Mật khẩu nhập lại không khớp'; errEl.classList.remove('hidden'); return; }
+  if (p1.length < 6) { errEl.textContent = '⚠️ Mật khẩu tối thiểu 6 ký tự'; errEl.classList.remove('hidden'); return; }
+  const btn = $id('signup-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang gửi...';
+  window.__signingUp = true;
+  try {
+    await store.signUp(email, p1, name);
+    showLoginView();
+    const notice = $id('login-notice');
+    notice.textContent = '📨 Đã gửi yêu cầu đăng ký cho ' + email + '. Sau khi chủ app duyệt, đăng nhập bình thường.';
+    notice.classList.remove('hidden');
+  } catch (err) {
+    errEl.textContent = signupErrorText(err);
+    errEl.classList.remove('hidden');
+  } finally {
+    window.__signingUp = false;
+    btn.disabled = false;
+    btn.textContent = '📨 Gửi yêu cầu đăng ký';
+  }
+}
+
+async function renderUsersTable() {
+  const el = $id('users-table');
+  const head = '<thead><tr><th>Người dùng</th><th>Trạng thái</th><th>Ngày gửi</th><th>Thao tác</th></tr></thead>';
+  el.innerHTML = head + '<tbody><tr><td colspan="4" class="empty-note">Đang tải...</td></tr></tbody>';
+  let all;
+  try {
+    all = await store.listApprovals();
+  } catch (e) {
+    el.innerHTML = head + '<tbody><tr><td colspan="4" class="empty-note">❌ Không tải được danh sách</td></tr></tbody>';
+    return;
+  }
+  const rows = Object.keys(all).map((uid) => Object.assign({ uid: uid }, all[uid]));
+  if (!rows.length) {
+    el.innerHTML = head + '<tbody><tr><td colspan="4" class="empty-note">Chưa có yêu cầu đăng ký nào.</td></tr></tbody>';
+    return;
+  }
+  const rank = (s) => (s === 'pending' ? 0 : s === 'denied' ? 1 : 2);
+  rows.sort((a, b) => {
+    if (rank(a.status) !== rank(b.status)) return rank(a.status) - rank(b.status);
+    return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+  });
+  el.innerHTML = head + '<tbody>' + rows.map((r) => {
+    const st = r.status === 'approved'
+      ? '<span class="tag tag-nap">Đã duyệt</span>'
+      : r.status === 'denied'
+        ? '<span class="tag tag-rut">Từ chối</span>'
+        : '<span class="tag tag-wait">⏳ Chờ duyệt</span>';
+    const actions = r.status === 'approved'
+      ? '<button class="btn-sm del" data-deny="' + r.uid + '">❌ Thu hồi</button>'
+      : r.status === 'denied'
+        ? '<button class="btn-sm" data-approve="' + r.uid + '">✅ Chấp nhận lại</button>'
+        : '<button class="btn-sm" data-approve="' + r.uid + '">✅ Duyệt</button> <button class="btn-sm del" data-deny="' + r.uid + '">❌ Từ chối</button>';
+    const date = r.createdAt ? fmtDateVN(String(r.createdAt).slice(0, 10)) : '';
+    return '<tr><td><b>' + escHtml(r.name || '') + '</b><div class="tx-meta">' + escHtml(r.email || '') + '</div></td>'
+      + '<td>' + st + '</td><td>' + date + '</td><td>' + actions + '</td></tr>';
+  }).join('') + '</tbody>';
 }
 
 function loginErrorText(err) {
@@ -942,10 +1078,63 @@ function bindUI() {
     setTimeout(() => window.print(), 80);
   });
 
+  $id('btn-show-signup').addEventListener('click', showSignupView);
+  $id('btn-back-login').addEventListener('click', showLoginView);
+  $id('signup-form').addEventListener('submit', submitSignup);
+
+  $id('btn-recheck').addEventListener('click', async () => {
+    if (!state.user) return;
+    try {
+      const ap = await store.getApproval(state.user.uid);
+      if (ap && ap.status === 'approved') {
+        toast('✅ Tài khoản đã được duyệt — chào mừng!');
+        $id('pending-screen').classList.add('hidden');
+        state.accessGranted = true;
+        renderAll();
+      } else if (ap && ap.status === 'denied') {
+        showPendingScreen('denied');
+      } else {
+        toast('⏳ Vẫn đang chờ duyệt...');
+      }
+    } catch (e) {
+      toast('❌ Kiểm tra lại không thành công');
+    }
+  });
+  $id('btn-pending-logout').addEventListener('click', async () => {
+    try { await store.signOut(); } catch (e) {}
+  });
+
+  $id('btn-users').addEventListener('click', async () => {
+    $id('modal-users').classList.remove('hidden');
+    await renderUsersTable();
+  });
+  $id('users-close').addEventListener('click', () => $id('modal-users').classList.add('hidden'));
+  $id('users-refresh').addEventListener('click', renderUsersTable);
+  $id('modal-users').addEventListener('click', (e) => { if (e.target === $id('modal-users')) $id('modal-users').classList.add('hidden'); });
+  $id('users-table').addEventListener('click', async (e) => {
+    const ap = e.target.closest('[data-approve]');
+    const dn = e.target.closest('[data-deny]');
+    try {
+      if (ap) {
+        await store.setApprovalStatus(ap.dataset.approve, 'approved');
+        toast('✅ Đã duyệt người dùng');
+        renderUsersTable();
+      }
+      if (dn) {
+        await store.setApprovalStatus(dn.dataset.deny, 'denied');
+        toast('⛔ Đã từ chối người dùng');
+        renderUsersTable();
+      }
+    } catch (err) {
+      toast('❌ Lỗi: ' + err.message);
+    }
+  });
+
   $id('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl = $id('login-error');
     errEl.classList.add('hidden');
+    $id('login-notice').classList.add('hidden');
     const btn = $id('login-btn');
     btn.disabled = true;
     btn.textContent = 'Đang đăng nhập...';
@@ -984,7 +1173,8 @@ function initApp() {
   bindUI();
   if (!isFirebase) {
     store = MockStore;
-    state.user = { email: 'demo@local' };
+    state.user = { email: 'demo@local', uid: 'demo' };
+    state.accessGranted = true;
     MockStore.init().then(handleData);
     renderAll();
   } else {

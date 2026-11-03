@@ -22,20 +22,49 @@
 
 <div id="login-screen" class="login-screen hidden">
   <div class="login-card">
-    <div class="login-logo">💰</div>
-    <h1>App Tiết Kiệm</h1>
-    <p class="login-sub">Đăng nhập để xem sổ tiết kiệm của bạn</p>
-    <form id="login-form" autocomplete="on">
-      <input type="email" id="login-email" placeholder="📧 Email" required autocomplete="username">
-      <input type="password" id="login-pass" placeholder="🔒 Mật khẩu" required autocomplete="current-password">
-      <button type="submit" class="btn btn-primary btn-block" id="login-btn">Đăng nhập</button>
-      <div id="login-error" class="login-error hidden"></div>
-    </form>
-    <div id="bio-login-wrap" class="hidden">
-      <div class="bio-divider">hoặc</div>
-      <button type="button" class="btn btn-gold btn-block" id="btn-bio-login">👆 Đăng nhập nhanh (sinh trắc / PIN)</button>
-      <div class="bio-email" id="bio-login-email"></div>
+    <div id="login-view">
+      <div class="login-logo">💰</div>
+      <h1>App Tiết Kiệm</h1>
+      <p class="login-sub">Đăng nhập để xem sổ tiết kiệm của bạn</p>
+      <form id="login-form" autocomplete="on">
+        <input type="email" id="login-email" placeholder="📧 Email" required autocomplete="username">
+        <input type="password" id="login-pass" placeholder="🔒 Mật khẩu" required autocomplete="current-password">
+        <button type="submit" class="btn btn-primary btn-block" id="login-btn">Đăng nhập</button>
+        <div id="login-error" class="login-error hidden"></div>
+        <div id="login-notice" class="login-notice hidden"></div>
+      </form>
+      <div id="bio-login-wrap" class="hidden">
+        <div class="bio-divider">hoặc</div>
+        <button type="button" class="btn btn-gold btn-block" id="btn-bio-login">👆 Đăng nhập nhanh (sinh trắc / PIN)</button>
+        <div class="bio-email" id="bio-login-email"></div>
+      </div>
+      <button type="button" class="linklike" id="btn-show-signup">📝 Đăng ký tài khoản mới (cần được duyệt)</button>
     </div>
+    <div id="signup-view" class="hidden">
+      <div class="login-logo">📝</div>
+      <h1>Đăng ký tài khoản</h1>
+      <p class="login-sub">Yêu cầu sẽ được chủ app duyệt trước khi vào được app</p>
+      <form id="signup-form" autocomplete="on">
+        <input type="text" id="signup-name" placeholder="👤 Họ tên của bạn" required autocomplete="name">
+        <input type="email" id="signup-email" placeholder="📧 Email" required autocomplete="username">
+        <input type="password" id="signup-pass" placeholder="🔒 Mật khẩu (tối thiểu 6 ký tự)" required autocomplete="new-password" minlength="6">
+        <input type="password" id="signup-pass2" placeholder="🔁 Nhập lại mật khẩu" required autocomplete="new-password">
+        <button type="submit" class="btn btn-primary btn-block" id="signup-btn">📨 Gửi yêu cầu đăng ký</button>
+        <div id="signup-error" class="login-error hidden"></div>
+      </form>
+      <button type="button" class="linklike" id="btn-back-login">← Về màn đăng nhập</button>
+    </div>
+  </div>
+</div>
+
+<div id="pending-screen" class="login-screen hidden">
+  <div class="login-card">
+    <div class="login-logo" id="pending-icon">⏳</div>
+    <h1 id="pending-title">Tài khoản đang chờ duyệt</h1>
+    <p class="login-sub" id="pending-msg">Yêu cầu đăng ký của bạn đã được gửi tới chủ app. Sau khi được duyệt, hãy đăng nhập lại.</p>
+    <button type="button" class="btn btn-ghost btn-block" id="btn-recheck">🔄 Kiểm tra lại</button>
+    <button type="button" class="btn btn-primary btn-block" id="btn-pending-logout">🚪 Đăng xuất</button>
+    <div class="bio-email" id="pending-email"></div>
   </div>
 </div>
 
@@ -50,6 +79,7 @@
         </div>
       </div>
       <div class="header-right">
+        <button class="btn-icon hidden" id="btn-users" title="Quản lý người dùng">👥</button>
         <button class="btn-icon" id="btn-theme" title="Chuyển giao diện sáng/tối">🌙</button>
         <button class="btn-icon" id="btn-settings" title="Cài đặt">⚙️</button>
         <button class="btn-icon" id="btn-logout" title="Đăng xuất">🚪</button>
@@ -340,6 +370,20 @@
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="pin-cancel">Hủy</button>
         <button type="button" class="btn btn-primary" id="pin-ok">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="modal-users">
+  <div class="modal modal-wide">
+    <div class="modal-header">👥 Quản lý người dùng</div>
+    <div class="modal-body">
+      <p class="pin-sub">Duyệt hoặc từ chối yêu cầu đăng ký. Người dùng bị từ chối sẽ không vào được app.</p>
+      <div class="table-scroll"><table class="report-table" id="users-table"></table></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="users-close">Đóng</button>
+        <button type="button" class="btn btn-primary" id="users-refresh">🔄 Làm mới</button>
       </div>
     </div>
   </div>

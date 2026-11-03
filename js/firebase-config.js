@@ -10,3 +10,4 @@ const firebaseConfig = {
 };
 
 const ALLOWED_EMAIL = "huyhoanghp@gmail.com";
+const ADMIN_EMAIL = "huyhoanghp@gmail.com";
