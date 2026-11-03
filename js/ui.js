@@ -768,6 +768,13 @@ function onAuthChanged() {
   const loginScreen = $id('login-screen');
   if (state.user) {
     loginScreen.classList.add('hidden');
+    if (!window.__authChecked) {
+      window.__authChecked = true;
+      if (!window.__freshLogin && typeof sessionExpired === 'function' && sessionExpired()) {
+        if (typeof enforceSession === 'function') { enforceSession(); return; }
+      }
+    }
+    if (typeof touchSession === 'function') touchSession();
     if (isFirebase) toast('👋 Xin chào, ' + (state.user.email || ''));
     renderAll();
   } else {
@@ -942,9 +949,12 @@ function bindUI() {
     const btn = $id('login-btn');
     btn.disabled = true;
     btn.textContent = 'Đang đăng nhập...';
+    window.__freshLogin = true;
     try {
       await store.signIn($id('login-email').value.trim(), $id('login-pass').value);
+      window.__freshLogin = false;
     } catch (err) {
+      window.__freshLogin = false;
       errEl.textContent = loginErrorText(err);
       errEl.classList.remove('hidden');
     } finally {
